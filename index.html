@@ -26,15 +26,15 @@
     <script>
         var require = {
             paths: {
-                "vs": "https://unpkg.com/monaco-editor/min/vs",
-                "monaco-vim": "https://unpkg.com/monaco-vim/dist/monaco-vim",
-                "monaco-emacs": "https://unpkg.com/monaco-emacs/dist/monaco-emacs"
+                "vs": "./node_modules/monaco-editor/min/vs",
+                "monaco-vim": "./node_modules/monaco-vim/dist/monaco-vim",
+                "monaco-emacs": "./node_modules/monaco-emacs/dist/monaco-emacs"
             }
         };
     </script>
-    <script src="https://unpkg.com/monaco-editor/min/vs/loader.js"></script>
-    <script src="https://unpkg.com/monaco-editor@0.23.0/min/vs/editor/editor.main.nls.js"></script>
-    <script src="https://unpkg.com/monaco-editor@0.23.0/min/vs/editor/editor.main.js"></script>
+    <script src="./node_modules/monaco-editor/min/vs/loader.js"></script>
+    <script src="./node_modules/monaco-editor/min/vs/editor/editor.main.nls.js"></script>
+    <script src="./node_modules/monaco-editor/min/vs/editor/editor.main.js"></script>
 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.4.1/semantic.min.css" integrity="sha256-9mbkOfVho3ZPXfM7W8sV2SndrGDuh7wuyLjtsWeTI1Q=" crossorigin="anonymous" />
     <script src="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.4.1/semantic.min.js" integrity="sha256-t8GepnyPmw9t+foMh3mKNvcorqNHamSKtKRxxpUEgFI=" crossorigin="anonymous"></script>
@@ -54,12 +54,12 @@
 
 <body>
     <div id="site-navigation" class="ui small inverted menu">
-        <div id="site-header" class="header item">
+        <!-- <div id="site-header" class="header item">
             <a href="/">
                 <img id="site-icon" src="./images/judge0_icon.png">
                 <h2>Judge0 IDE</h2>
             </a>
-        </div>
+        </div> -->
         <div class="left menu">
             <div class="ui dropdown item site-links on-hover">
                 File <i class="dropdown icon"></i>
@@ -130,6 +130,7 @@
                     <option value="70" mode="python">Python (2.7.17)</option>
                     <option value="71" mode="python">Python (3.8.1)</option>
                     <option value="1010" mode="python">Python for ML (3.7.3)</option>
+                    <option value="420" mode="python">DeepTE Python(3.7.3)</option>
                     <option value="80" mode="r">R (4.0.0)</option>
                     <option value="72" mode="ruby">Ruby (2.7.0)</option>
                     <option value="73" mode="rust">Rust (1.40.0)</option>
@@ -153,9 +154,9 @@
             <div class="item no-left-padding borderless">
                 <button id="run-btn" class="ui primary labeled icon button"><i class="play icon"></i>Run (F9)</button>
             </div>
-            <div id="navigation-message" class="item borderless">
+            <!-- <div id="navigation-message" class="item borderless">
                 <span class="navigation-message-text"></span>
-            </div>
+            </div> -->
         </div>
         <div class="right menu">
             <div id="judge0-more" class="ui dropdown item site-links">

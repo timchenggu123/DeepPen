@@ -164,20 +164,6 @@ function showMessages() {
     $navigationMessage.html(combinedMessage);
 }
 
-function loadMessages() {
-    $.ajax({
-        url: `https://minio.judge0.com/public/ide/messages.json?${Date.now()}`,
-        type: "GET",
-        headers: {
-            "Accept": "application/json"
-        },
-        success: function (data, textStatus, jqXHR) {
-            messagesData = data;
-            showMessages();
-        }
-    });
-}
-
 function showError(title, content) {
     $("#site-modal #title").html(title);
     $("#site-modal .content").html(content);
@@ -478,7 +464,7 @@ function updateScreenElements() {
 $(window).resize(function() {
     layout.updateSize();
     updateScreenElements();
-    showMessages();
+    // showMessages();
 });
 
 $(document).ready(function () {
@@ -538,7 +524,8 @@ $(document).ready(function () {
         if (keyCode == 120) { // F9
             e.preventDefault();
             run();
-        } else if (keyCode == 119) { // F8
+        } else if (keyCode == 121) { // F8
+            console.log("Attempt to set apiURL")
             e.preventDefault();
             var url = prompt("Enter URL of Judge0 API:", apiUrl);
             if (url != null) {
@@ -571,8 +558,6 @@ $(document).ready(function () {
     $(".message .close").on("click", function () {
         $(this).closest(".message").transition("fade");
     });
-
-    loadMessages();
 
     require(["vs/editor/editor.main", "monaco-vim", "monaco-emacs"], function (ignorable, MVim, MEmacs) {
         layout = new GoldenLayout(layoutConfig, $("#site-content"));
@@ -1207,6 +1192,7 @@ var sources = {
     86: clojureSource,
     87: fsharpSource,
     88: groovySource,
+    420: pythonForMlSource,
     1001: cSource,
     1002: cppSource,
     1003: c3Source,
