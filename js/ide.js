@@ -165,9 +165,9 @@ function showMessages() {
 }
 
 function showError(title, content) {
-    $("#site-modal #title").html(title);
-    $("#site-modal .content").html(content);
-    $("#site-modal").modal("show");
+    $("#ide-modal #title").html(title);
+    $("#ide-modal .content").html(content);
+    $("#ide-modal").modal("show");
 }
 
 function handleError(jqXHR, textStatus, errorThrown) {
@@ -237,8 +237,8 @@ function handleResult(data) {
     console.log(compile_output);
     var results_data = JSON.parse(compile_output);
     draw_chart(results_data);
-    document.getElementById("chart-segment").style.display = "block";
-    document.getElementById("chart-segment").scrollIntoView();
+    document.getElementById("results").style.display = "block";
+    document.getElementById("results").scrollIntoView(true);
 }
 
 function getIdFromURI() {
@@ -559,14 +559,16 @@ $(document).ready(function () {
 
     $("select.dropdown").dropdown();
     $(".ui.dropdown").dropdown();
-    $(".ui.dropdown.site-links").dropdown({action: "hide", on: "hover"});
+    $(".ui.dropdown.ide-links").dropdown({action: "hide", on: "hover"});
     $(".ui.checkbox").checkbox();
     $(".message .close").on("click", function () {
         $(this).closest(".message").transition("fade");
     });
 
+    $('.tabular.menu .item').tab();
+
     require(["vs/editor/editor.main", "monaco-vim", "monaco-emacs"], function (ignorable, MVim, MEmacs) {
-        layout = new GoldenLayout(layoutConfig, $("#site-content"));
+        layout = new GoldenLayout(layoutConfig, $("#ide-content"));
 
         MonacoVim = MVim;
         MonacoEmacs = MEmacs;
@@ -693,7 +695,7 @@ $(document).ready(function () {
             } else {
                 loadRandomLanguage();
             }
-            $("#site-navigation").css("border-bottom", "1px solid black");
+            $("#ide-navigation").css("border-bottom", "1px solid black");
             sourceEditor.focus();
             editorsUpdateFontSize(fontSize);
         });
@@ -1050,7 +1052,7 @@ from torch import Tensor\n\
 \n\
 class Solution(DeepPenAlgorithm):\n\
     def run_algorithm(self, net, data) -> Tensor:\n\
-        eps = 1000\n\
+        eps = 0.1\n\
         x_fgm = fast_gradient_method(net, data, eps, np.inf)\n\
         return x_fgm\n\
 ";
