@@ -3,12 +3,11 @@ html, body {
     min-height: 100%;
     margin: 0;
     padding: 0;
-    /* background-color: #212121; */
-    background-color: #fafafa;
+    
 }
 
 body {
-    background: url(/images/judge0_background.png) no-repeat center center fixed;
+    background-color: #f5f5f5;
     -webkit-background-size: cover;
     -moz-background-size: cover;
     -o-background-size: cover;
@@ -191,6 +190,7 @@ input[type="text"] {
 #ide-segment{
     height: 100%;
     background-color: #212121;
+    box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
 }
 
 #ide-container{
@@ -201,19 +201,19 @@ input[type="text"] {
 #chart-segment{
     scroll-margin-top: 0;
     /* display: none; */
-    background-color: #212121;
+    /* background-color: #212121; */
 }
 #chart-container{
     width: 90%;
-    background-color: #fafafa;
+    /* background-color: #fafafa; */
 }
 
-#table-segment{
+/* #table-segment{
     background-color: #212121;
-}
+} */
 #table-container{
     width: 90%;
-    background-color: #fafafa;
+    /* background-color: #fafafa; */
 }
 
 @import url("https://fonts.googleapis.com/css?family=Open+Sans:400,700&display=swap");
@@ -269,6 +269,6 @@ body ::-webkit-scrollbar {
     width: 90%;
 }
 
-#results{
+/* #results{
     display: none;
-}
+} */
