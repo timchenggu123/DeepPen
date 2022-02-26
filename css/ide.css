@@ -184,3 +184,22 @@ body {
 input[type="text"] {
     width: 205px !important;
 }
+
+#site-content{
+    height: 100%;
+}
+
+#ide-segment{
+    height: 100%;
+    background-color: #000;
+}
+
+#ide-container{
+    height:100%;
+    width: 90%;
+}
+
+#chart-segment{
+    display: none;
+}
+

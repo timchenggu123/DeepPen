@@ -233,6 +233,12 @@ function handleResult(data) {
     }
 
     $runBtn.removeClass("loading");
+
+    console.log(compile_output);
+    var results_data = JSON.parse(compile_output);
+    draw_chart(results_data);
+    document.getElementById("chart-segment").style.display = "block";
+    document.getElementById("chart-segment").scrollIntoView();
 }
 
 function getIdFromURI() {
@@ -571,7 +577,7 @@ $(document).ready(function () {
                 theme: "vs-dark",
                 scrollBeyondLastLine: true,
                 readOnly: state.readOnly,
-                language: "cpp",
+                language: "python",
                 minimap: {
                     enabled: false
                 }
@@ -1036,6 +1042,18 @@ import sklearn\n\
 print(\"hello, world\")\n\
 ";
 
+var DeepTESource = "\
+from DeepPenAlgorithm import DeepPenAlgorithm\n\
+from cleverhans.torch.attacks.fast_gradient_method import fast_gradient_method\n\
+import numpy as np\n\
+from torch import Tensor\n\
+\n\
+class Solution(DeepPenAlgorithm):\n\
+    def run_algorithm(self, net, data) -> Tensor:\n\
+        eps = 1000\n\
+        x_fgm = fast_gradient_method(net, data, eps, np.inf)\n\
+        return x_fgm\n\
+";
 var bosqueSource = "\
 // On the Judge0 IDE, Bosque (https://github.com/microsoft/BosqueLanguage)\n\
 // is automatically updated every hour to the latest commit on master branch.\n\
@@ -1192,7 +1210,7 @@ var sources = {
     86: clojureSource,
     87: fsharpSource,
     88: groovySource,
-    420: pythonForMlSource,
+    420: DeepTESource,
     1001: cSource,
     1002: cppSource,
     1003: c3Source,
@@ -1261,6 +1279,7 @@ var fileNames = {
     86: "main.clj",
     87: "script.fsx",
     88: "script.groovy",
+    420:"algorithm.py",
     1001: "main.c",
     1002: "main.cpp",
     1003: "main.c3",
