@@ -4,7 +4,7 @@ var speed_chart;
 var accuracy_chart;
 var similarity_chart;
 
-function draw_speed_chart(data){
+function drawSpeedChart(data){
     const ctx = document.getElementById('speedChart').getContext('2d');
     var x_labels = [];
     var y_data = [];
@@ -43,7 +43,7 @@ function draw_speed_chart(data){
     return speed_chart
 }
 
-function draw_accuracy_chart(data){
+function drawAccuracyChart(data){
     const ctx = document.getElementById('accuracyChart').getContext('2d');
     var x_labels = [];
     var y_data = [];
@@ -92,7 +92,7 @@ function draw_accuracy_chart(data){
     return accuracy_chart
 }
 
-function draw_similarity_chart(data){
+function drawSimilarityChart(data){
     const ctx = document.getElementById('similarityChart').getContext('2d');
     var x_labels = [];
     var y_data = [];
@@ -130,7 +130,7 @@ function draw_similarity_chart(data){
     return similarity_chart
 }
 
-function clean_chart(){
+function cleanChart(){
     if (typeof speed_chart === 'undefined' || typeof accuracy_chart === 'undefined' || typeof similarity_chart === 'undefined') {
         return;
     }
@@ -139,9 +139,9 @@ function clean_chart(){
     similarity_chart.destroy();
 }
 
-function draw_chart(data) {
-    clean_chart();
-    speed_chart = draw_speed_chart(data);
-    accuracy_chart = draw_accuracy_chart(data);
-    similarity_chart = draw_similarity_chart(data);
+function drawChart(data) {
+    cleanChart();
+    speed_chart = drawSpeedChart(data);
+    accuracy_chart = drawAccuracyChart(data);
+    similarity_chart = drawSimilarityChart(data);
 }

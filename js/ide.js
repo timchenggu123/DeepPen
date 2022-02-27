@@ -239,8 +239,9 @@ function handleResult(data) {
     $runBtn.removeClass("loading");
 
     console.log(compile_output);
-    var results_data = JSON.parse(compile_output);
-    draw_chart(results_data);
+    var resultsData = JSON.parse(compile_output);
+    drawChart(resultsData);
+    createTable(resultsData);
     document.getElementById("results").style.display = "block";
     document.getElementById("results").scrollIntoView(true);
 }
