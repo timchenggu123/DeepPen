@@ -1,3 +1,4 @@
+
 var defaultUrl = localStorageGetItem("api-url") || "https://ce.judge0.com";
 var apiUrl = defaultUrl;
 var wait = localStorageGetItem("wait") || false;
@@ -38,6 +39,8 @@ var timeStart;
 var timeEnd;
 
 var messagesData;
+
+var additional_files;
 
 var layoutConfig = {
     settings: {
@@ -124,6 +127,7 @@ function decode(bytes) {
         return unescape(escaped);
     }
 }
+
 
 function localStorageSetItem(key, value) {
   try {
@@ -340,31 +344,48 @@ function run() {
         });
     }
 
-    var fetchAdditionalFiles = false;
-    if (parseInt(languageId) === 82) {
-        if (sqliteAdditionalFiles === "") {
-            fetchAdditionalFiles = true;
-            $.ajax({
-                url: `https://minio.judge0.com/public/ide/sqliteAdditionalFiles.base64.txt?${Date.now()}`,
-                type: "GET",
-                async: true,
-                contentType: "text/plain",
-                success: function (responseData, textStatus, jqXHR) {
-                    sqliteAdditionalFiles = responseData;
-                    data["additional_files"] = sqliteAdditionalFiles;
-                    sendRequest(data);
-                },
-                error: handleRunError
-            });
-        }
-        else {
-            data["additional_files"] = sqliteAdditionalFiles;
-        }
-    }
+    // var fetchAdditionalFiles = false;
+    // if (parseInt(languageId) === 82) {
+    //     if (sqliteAdditionalFiles === "") {
+    //         fetchAdditionalFiles = true;
+    //         $.ajax({
+    //             url: `https://minio.judge0.com/public/ide/sqliteAdditionalFiles.base64.txt?${Date.now()}`,
+    //             type: "GET",
+    //             async: true,
+    //             contentType: "text/plain",
+    //             success: function (responseData, textStatus, jqXHR) {
+    //                 sqliteAdditionalFiles = responseData;
+    //                 data["additional_files"] = sqliteAdditionalFiles;
+    //                 sendRequest(data);
+    //             },
+    //             error: handleRunError
+    //         });
+    //     }
+    //     else {
+            
+    //     }
+    // }
+    
 
-    if (!fetchAdditionalFiles) {
+    if (additional_files){
+        var reader = new FileReader();
+        reader.readAsDataURL(additional_files);
+        reader.onload = function () {
+          let encoded = reader.result.toString().replace(/^data:(.*,)?/, '');
+          if ((encoded.length % 4) > 0) {
+            encoded += '='.repeat(4 - (encoded.length % 4));
+          }
+          console.log(encoded);
+          data["additional_files"] = encoded
+          sendRequest(data);
+        };
+        reader.onerror = function (error) {
+          console.log('Error: ', error);
+        };
+    }else{
         sendRequest(data);
     }
+   
 }
 
 function fetchSubmission(submission_token) {
@@ -467,6 +488,20 @@ function updateScreenElements() {
     });
 }
 
+function fileUploadHandler(fileInput){
+    console.log(fileInput)
+    const files = fileInput.files;
+    let message = "Succssfully added following files:\n\r"
+    for (let i = 0; i < files.length; i++) {
+        const name = files[i].name;
+        const type = files[i].type;
+        additional_files=files[i]
+        message += name+type + "\n\r"
+      }
+      alert(message);
+}
+
+
 $(window).resize(function() {
     layout.updateSize();
     updateScreenElements();
@@ -530,7 +565,7 @@ $(document).ready(function () {
         if (keyCode == 120) { // F9
             e.preventDefault();
             run();
-        } else if (keyCode == 121) { // F8
+        } else if (keyCode == 121) { // F10
             console.log("Attempt to set apiURL")
             e.preventDefault();
             var url = prompt("Enter URL of Judge0 API:", apiUrl);
@@ -720,72 +755,7 @@ class Solution(DeepPenAlgorithm):\n\
 ";
 
 var sources = {
-    45: assemblySource,
-    46: bashSource,
-    47: basicSource,
-    48: cSource,
-    49: cSource,
-    50: cSource,
-    51: csharpSource,
-    52: cppSource,
-    53: cppSource,
-    54: cppSource,
-    55: lispSource,
-    56: dSource,
-    57: elixirSource,
-    58: erlangSource,
-    44: executableSource,
-    59: fortranSource,
-    60: goSource,
-    61: haskellSource,
-    62: javaSource,
-    63: javaScriptSource,
-    64: luaSource,
-    65: ocamlSource,
-    66: octaveSource,
-    67: pascalSource,
-    68: phpSource,
-    43: plainTextSource,
-    69: prologSource,
-    70: pythonSource,
-    71: pythonSource,
-    72: rubySource,
-    73: rustSource,
-    74: typescriptSource,
-    75: cSource,
-    76: cppSource,
-    77: cobolSource,
-    78: kotlinSource,
-    79: objectiveCSource,
-    80: rSource,
-    81: scalaSource,
-    82: sqliteSource,
-    83: swiftSource,
-    84: vbSource,
-    85: perlSource,
-    86: clojureSource,
-    87: fsharpSource,
-    88: groovySource,
-    420: DeepPenSource,
-    1001: cSource,
-    1002: cppSource,
-    1003: c3Source,
-    1004: javaSource,
-    1005: javaTestSource,
-    1006: mpiccSource,
-    1007: mpicxxSource,
-    1008: mpipySource,
-    1009: nimSource,
-    1010: pythonForMlSource,
-    1011: bosqueSource,
-    1012: cppTestSource,
-    1013: cSource,
-    1014: cppSource,
-    1015: cppTestSource,
-    1021: csharpSource,
-    1022: csharpSource,
-    1023: csharpTestSource,
-    1024: fsharpSource
+    420: DeepPenSource
 };
 
 var fileNames = {

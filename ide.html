@@ -23,7 +23,7 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/golden-layout/1.5.9/css/goldenlayout-base.css" integrity="sha256-oIDR18yKFZtfjCJfDsJYpTBv1S9QmxYopeqw2dO96xM=" crossorigin="anonymous" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/golden-layout/1.5.9/css/goldenlayout-dark-theme.css" integrity="sha256-ygw8PvSDJJUGLf6Q9KIQsYR3mOmiQNlDaxMLDOx9xL0=" crossorigin="anonymous" />
-
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.7.1/jszip.min.js" integrity="sha512-xQBQYt9UcgblF6aCMrwU1NkVA7HCXaSN2oq0so80KO+y68M+n64FOcqgav4igHe6D5ObBLIf68DWv+gfBowczg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
     <script>
         var require = {
             paths: {
@@ -39,7 +39,7 @@
 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.4.1/semantic.min.css" integrity="sha256-9mbkOfVho3ZPXfM7W8sV2SndrGDuh7wuyLjtsWeTI1Q=" crossorigin="anonymous" />
     <script src="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.4.1/semantic.min.js" integrity="sha256-t8GepnyPmw9t+foMh3mKNvcorqNHamSKtKRxxpUEgFI=" crossorigin="anonymous"></script>
-
+    
     <link href="https://fonts.googleapis.com/css?family=Exo+2" rel="stylesheet">
 
     <script type="text/javascript" src="third_party/download.js"></script>
@@ -177,7 +177,7 @@
                             File <i class="dropdown icon"></i>
                             <div class="menu">
                                 <label for="additional_file" class="item" target="_blank" href="/"><i class="upload icon"></i> Additional File</label>
-                                <input type="file" id="additional_file" style="display: none;" onchange="additionalFileHandler()"/>
+                                <input type="file" id="additional_file" style="display: none;" onchange="fileUploadHandler(this)"/>
                                 <div class="item" onclick="downloadSource()"><i class="download icon"></i> Download</div>
                                 <div id="insert-template-btn" class="item"><i class="file code outline icon"></i> Insert template
                                     for current language</div>
