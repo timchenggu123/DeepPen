@@ -612,7 +612,7 @@ $(document).ready(function () {
         $(this).closest(".message").transition("fade");
     });
 
-    $('.tabular.menu .item').tab();
+    $('.tabular.menu .item').tab()
 
     require(["vs/editor/editor.main", "monaco-vim", "monaco-emacs"], function (ignorable, MVim, MEmacs) {
         layout = new GoldenLayout(layoutConfig, $("#ide-content"));

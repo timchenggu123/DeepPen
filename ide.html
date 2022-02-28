@@ -296,6 +296,7 @@
                 <!-- </div> -->
             </div>
             <div id="table-segment" class="ui vertical segment">
+                <div class="ui header">Data</div>
                 <div id="table-container" class ="ui centered card">
                     <table class="ui celled table">
                         <thead>
@@ -322,12 +323,13 @@
                         </tbody>
                       </table>
                 </div>
+                <div class="ui button" onclick="download_table_as_csv('results-table');">Download as CSV</div>
             </div>
         </div>
 
     </div>
 
-    <div id="ide-footer">
+    <div id="ide-footer" style="display: none">
         <div id="editor-status-line"></div>
         <!-- <span>© 2016-2022 <a href="https://judge0.com?ref=ide">Judge0</a> -->
         <span id="status-line"></span>
@@ -470,6 +472,7 @@
 
 
 </body>
+<script type="text/javascript" src="js/sortable.js"></script>
 <script type="text/javascript" src="js/table.js"></script>
 <script type="text/javascript" src="js/chart.js"></script>
 <script type="text/javascript" src="js/ide.js"></script>
