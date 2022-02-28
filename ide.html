@@ -183,30 +183,31 @@
                                     for current language</div>
                             </div>
                         </div>
-                        <div class="link item" onclick="$('#ide-settings').modal('show')"><i class="cog icon"></i> Settings</div>
                         <div class="item borderless">
                             <select id="select-language" class="ui dropdown">
                                 <option value="420" mode="python">DeepPen Python(3.7.3)</option>
                             </select>
                         </div>
-                        <div class="item fitted borderless wide screen only">
+                        <div class="item" style="display: none;">
                             <div class="ui input">
                                 <input id="compiler-options" type="text" placeholder="Compiler options"></input>
                             </div>
                         </div>
-                        <div class="item borderless wide screen only">
+                        <div class="item" style="display: none;" >
                             <div class="ui input">
                                 <input id="command-line-arguments" type="text" placeholder="Command line arguments"></input>
                             </div>
                         </div>
-                        <div class="item no-left-padding borderless">
-                            <button id="run-btn" class="ui primary labeled icon button"><i class="play icon"></i>Run (F9)</button>
-                        </div>
+                        <div class="link item fitted borderless" onclick="$('#experiment-configurations').modal('show')"><i class="wrench icon"></i> Experiment Configuration</div>
+                        
                         <!-- <div id="navigation-message" class="item borderless">
                             <span class="navigation-message-text"></span>
                         </div> -->
                     </div>
-                    <div class="right menu">
+                    <div class="right item borderless">
+                        <button id="run-btn" class="ui primary labeled icon button"><i class="play icon"></i>Run (F9)</button>
+                    </div>
+                    <!-- <div class="right menu">
                         <div id="judge0-more" class="ui dropdown item ide-links">
                             More
                             <i class="dropdown icon"></i>
@@ -249,7 +250,7 @@
                                     Share on Facebook</a>
                             </div>
                         </div>
-                    </div>
+                    </div> -->
                 </div>
     
                 <div id="ide-content"></div>
@@ -267,7 +268,10 @@
                                   Speed
                                 </a>
                                 <a class="item" data-tab="accuracy-chart">
-                                  Accuracy
+                                  Accuracy Compare
+                                </a>
+                                <a class="item" data-tab="accuracy-diff-chart">
+                                  Accuracy Difference
                                 </a>
                                 <a class="item" data-tab="similarity-chart">
                                   Similarity
@@ -276,19 +280,16 @@
                         </div>
                         <div class="thirteen wide inverted column">
                             <div class="ui active tab" data-tab="speed-chart">
-                                <div class="ui segment">
-                                    <canvas id="speedChart"></canvas>
-                                </div>
+                                <canvas class = "chart" id="speedChart"></canvas>
                             </div>
                             <div class="ui tab" data-tab="accuracy-chart">
-                                <div class="ui segment">
-                                    <canvas id="accuracyChart"></canvas>
-                                </div>
+                                <canvas class = "chart" id="accuracyChart"></canvas>
+                            </div>
+                            <div class="ui tab" data-tab="accuracy-diff-chart">
+                                <canvas class = "chart" id="accuracyDiffChart"></canvas>
                             </div>
                             <div class="ui tab" data-tab="similarity-chart">
-                                <div class="ui segment">
-                                    <canvas id="similarityChart"></canvas>
-                                </div>
+                                <canvas class = "chart" id="similarityChart"></canvas>
                             </div>
                         </div>
                     </div>
@@ -324,6 +325,12 @@
             </div>
         </div>
 
+    </div>
+
+    <div id="ide-footer">
+        <div id="editor-status-line"></div>
+        <!-- <span>© 2016-2022 <a href="https://judge0.com?ref=ide">Judge0</a> -->
+        <span id="status-line"></span>
     </div>
 
     <div id="ide-modal" class="ui modal">
@@ -379,12 +386,39 @@
         </div>
     </div>
 
-
-    <div id="ide-footer">
-        <div id="editor-status-line"></div>
-        <span>© 2016-2022 <a href="https://judge0.com?ref=ide">Judge0</a>
-        <span id="status-line"></span>
+    <div id="experiment-configurations" class="ui modal">
+        <i class="close icon"></i>
+        <div class="header">
+            <i class="wrench icon"></i>
+            Experiment Configurations
+        </div>
+        <div class="content">
+            <div class="ui form">
+                <label class="ui header">Target Neural Networks</label>
+                <!-- <div class="ui horizontal divider"></div>
+                <div class="fields">
+                    <div class="inline field">
+                    <label>Network Types</label>
+                    <select id="select network" class="ui dropdown">
+                        <option value="MNIST_FFNN">Fully Connected Neural Network</option>
+                        <option value="MNIST_CNN">Fully Convoluted Neural Network</option>
+                    </seclect>
+                    
+                </div> -->
+                <div class="field">
+                    <textarea id= "nn-configs" autocomplete="off" ></textarea>
+                </div>
+                <div class="ui button" onclick="saveNNConfig()">Save</div>
+                <label class="ui header">Target Datasets</label>
+                <div class="field">
+                    <textarea id= "data-configs" autocomplete="off" ></textarea>
+                </div>
+                <div class="ui button" onclick="saveDataConfig()">Save</div>
+            </div>
+        </div>
     </div>
+
+
 </body>
 <script type="text/javascript" src="js/table.js"></script>
 <script type="text/javascript" src="js/chart.js"></script>

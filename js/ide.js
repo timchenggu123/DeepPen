@@ -256,6 +256,28 @@ function downloadSource() {
     download(sourceEditor.getValue(), fileNames[value], "text/plain");
 }
 
+//Test Configuration Presets
+const nn_config_preset = "[('MNIST_FFNN', 2, 128),('MNIST_FFNN', 3, 256),('MNIST_FFNN', 4, 512),('MNIST_FFNN', 5, 1024)]";
+const data_config_preset="100";
+let nn_configs=localStorageGetItem("nn_configs") || nn_config_preset;
+let data_configs=localStorageGetItem("data_configs") || data_config_preset;
+
+let experiment_configs = {
+    'nn_configs': nn_configs,
+    'data_configs': data_configs
+}
+
+function saveNNConfig(){
+    const val = document.getElementById('nn-configs').value
+    experiment_configs['nn_configs'] = val
+    localStorageSetItem('nn_configs', val)
+}
+function saveDataConfig(){
+    const val = document.getElementById('data-configs').value
+    experiment_configs['data_configs'] = val
+    localStorageSetItem('data_configs', val)
+}
+
 function loadSavedSource() {
     snippet_id = getIdFromURI();
 
@@ -304,7 +326,8 @@ function run() {
     sandboxMessageEditor.setValue("");
 
     var sourceValue = encode(sourceEditor.getValue());
-    var stdinValue = encode(stdinEditor.getValue());
+    // var stdinValue = encode(stdinEditor.getValue());
+    var stdinValue=encode(JSON.stringify(experiment_configs));
     var languageId = resolveLanguageId($selectLanguage.val());
     var compilerOptions = $compilerOptions.val();
     var commandLineArguments = $commandLineArguments.val();
@@ -344,29 +367,6 @@ function run() {
             error: handleRunError
         });
     }
-
-    // var fetchAdditionalFiles = false;
-    // if (parseInt(languageId) === 82) {
-    //     if (sqliteAdditionalFiles === "") {
-    //         fetchAdditionalFiles = true;
-    //         $.ajax({
-    //             url: `https://minio.judge0.com/public/ide/sqliteAdditionalFiles.base64.txt?${Date.now()}`,
-    //             type: "GET",
-    //             async: true,
-    //             contentType: "text/plain",
-    //             success: function (responseData, textStatus, jqXHR) {
-    //                 sqliteAdditionalFiles = responseData;
-    //                 data["additional_files"] = sqliteAdditionalFiles;
-    //                 sendRequest(data);
-    //             },
-    //             error: handleRunError
-    //         });
-    //     }
-    //     else {
-            
-    //     }
-    // }
-    
 
     if (additional_files){
         var reader = new FileReader();
@@ -502,7 +502,6 @@ function fileUploadHandler(fileInput){
       alert(message);
 }
 
-
 $(window).resize(function() {
     layout.updateSize();
     updateScreenElements();
@@ -541,7 +540,7 @@ $(document).ready(function () {
 
     $navigationMessage = $("#navigation-message span");
     $updates = $("#judge0-more");
-
+    
     $(`input[name="editor-mode"][value="${editorMode}"]`).prop("checked", true);
     $("input[name=\"editor-mode\"]").on("change", function(e) {
         editorMode = e.target.value;
@@ -560,6 +559,9 @@ $(document).ready(function () {
     });
 
     $statusLine = $("#status-line");
+
+    document.getElementById("nn-configs").innerHTML=nn_configs
+    document.getElementById("data-configs").innerHTML=data_configs
 
     $("body").keydown(function (e) {
         var keyCode = e.keyCode || e.which;
@@ -739,7 +741,6 @@ $(document).ready(function () {
         layout.init();
     });
 });
-
 // Template Sources
 
 var DeepPenSource = "\
