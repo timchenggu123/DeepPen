@@ -241,7 +241,7 @@ function handleResult(data) {
     console.log(compile_output);
     var resultsData = JSON.parse(compile_output);
     drawChart(resultsData);
-    createTable(resultsData);
+    createResultsTable(resultsData);
     document.getElementById("results").style.display = "block";
     document.getElementById("results").scrollIntoView(true);
 }
@@ -257,25 +257,28 @@ function downloadSource() {
 }
 
 //Test Configuration Presets
-const nn_config_preset = "[('MNIST_FFNN', 2, 128),('MNIST_FFNN', 3, 256),('MNIST_FFNN', 4, 512),('MNIST_FFNN', 5, 1024)]";
-const data_config_preset="100";
-let nn_configs=localStorageGetItem("nn_configs") || nn_config_preset;
-let data_configs=localStorageGetItem("data_configs") || data_config_preset;
+const nn_configs_preset = [['MNIST_FFNN', 2, 128],['MNIST_FFNN', 3, 256],['MNIST_FFNN', 4, 512],['MNIST_FFNN', 5, 1024]];
+const data_configs_preset="100";
 
-let experiment_configs = {
-    'nn_configs': nn_configs,
-    'data_configs': data_configs
-}
+nn_configs = JSON.parse(localStorageGetItem('nn_configs'))|| nn_configs_preset,
+data_configs = JSON.parse(localStorageGetItem('data_configs')) || data_configs_preset
 
 function saveNNConfig(){
-    const val = document.getElementById('nn-configs').value
-    experiment_configs['nn_configs'] = val
+    val=JSON.stringify(nn_configs)
     localStorageSetItem('nn_configs', val)
 }
 function saveDataConfig(){
     const val = document.getElementById('data-configs').value
-    experiment_configs['data_configs'] = val
+    data_configs = val
     localStorageSetItem('data_configs', val)
+}
+function addNNToTable(){
+    const type = document.getElementById('select-network').value
+    const m = document.getElementById('select-m-layers').value
+    const n = document.getElementById('select-n-nodes').value
+    const data = [type, m, n]
+    updateNNConfigsTable(data)
+    nn_configs=readNNConfigsTableData2Array()
 }
 
 function loadSavedSource() {
@@ -325,6 +328,13 @@ function run() {
     compileOutputEditor.setValue("");
     sandboxMessageEditor.setValue("");
 
+    data_configs=document.getElementById("data-configs").value;
+    let experiment_configs = {
+        nn_configs:JSON.stringify(nn_configs),
+        data_configs:JSON.stringify(data_configs)
+    }
+   
+   
     var sourceValue = encode(sourceEditor.getValue());
     // var stdinValue = encode(stdinEditor.getValue());
     var stdinValue=encode(JSON.stringify(experiment_configs));
@@ -559,9 +569,8 @@ $(document).ready(function () {
     });
 
     $statusLine = $("#status-line");
-
-    document.getElementById("nn-configs").innerHTML=nn_configs
-    document.getElementById("data-configs").innerHTML=data_configs
+    createNNConfigsTable(nn_configs)
+    document.getElementById("data-configs").value=data_configs
 
     $("body").keydown(function (e) {
         var keyCode = e.keyCode || e.which;

@@ -405,15 +405,65 @@
                     </seclect>
                     
                 </div> -->
-                <div class="field">
+                <!-- <div class="field">
                     <textarea id= "nn-configs" autocomplete="off" ></textarea>
                 </div>
                 <div class="ui button" onclick="saveNNConfig()">Save</div>
-                <label class="ui header">Target Datasets</label>
-                <div class="field">
+                <label class="ui header">Target Datasets</label> -->
+                <!-- <div class="field">
                     <textarea id= "data-configs" autocomplete="off" ></textarea>
                 </div>
                 <div class="ui button" onclick="saveDataConfig()">Save</div>
+                <div class="field"></div> -->
+                <div class="field"></div>
+                <label class = "ui header">Target Neural Networks</label>
+                <div class="ui equal height grid">
+                    <div class="six wide column">
+                        <div class="field">
+                            <label>Network types</label>
+                            <select id="select-network" class="ui dropdown">
+                                <option value="MNIST_FFNN">Fully Connected Neural Network</option>
+                                <option value="MNIST_CNN">Fully Convoluted Neural Network</option>
+                            </select>
+                        </div>
+                        <div class="field">
+                            <label># of hidden layers</label>
+                            <select id="select-m-layers" class="ui dropdown">
+                                <option value="1">1</option>
+                                <option value="2">2</option>
+                                <option value="3">3</option>
+                                <option value="4">4</option>
+                                <option value="5">5</option>
+                            </select>
+                        </div>
+                        <div class="field">
+                            <label># of nodes per layer</label>
+                            <select id="select-n-nodes" class="ui dropdown">
+                                <option value="64">64</option>
+                                <option value="128">128</option>
+                                <option value="256">256</option>
+                                <option value="512">512</option>
+                                <option value="1024">1024</option>
+                            </select>
+                        </div>
+                        <div class="field">
+                            <div class="ui button" onclick="addNNToTable()">Add</div>
+                        </div>
+                    </div>
+                    <div class="ten wide stretched column">
+                        <div id="nn-configs-table" class="ui container"></div>
+                    </div>
+                </div>
+                <div class="ui container">
+                    <div class="ui right button" onclick="saveNNConfig()">Save</div>
+                </div>
+                <div class="field"></div>
+                <label class="ui header">Dataset Configuration</label>
+                <div class="inline field">
+                    <label>n test data</label>
+                    <input id="data-configs" placeholder="(enter a value 0~1000)">
+                    <div class="ui floated right button" onclick="saveDataConfig()">Save</div>
+                </div>
             </div>
         </div>
     </div>
