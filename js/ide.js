@@ -1,5 +1,5 @@
 
-var defaultUrl = localStorageGetItem("api-url") || "https://ce.judge0.com";
+var defaultUrl = localStorageGetItem("api-url") || "https://127.0.0.1:2358";
 var apiUrl = defaultUrl;
 var wait = localStorageGetItem("wait") || false;
 var check_timeout = 300;
@@ -752,7 +752,7 @@ $(document).ready(function () {
 });
 // Template Sources
 
-var DeepPenSource = "\
+var TorchSource = "\
 from DeepPenAlgorithm import DeepPenAlgorithm\n\
 from cleverhans.torch.attacks.fast_gradient_method import fast_gradient_method\n\
 import numpy as np\n\
@@ -765,8 +765,21 @@ class Solution(DeepPenAlgorithm):\n\
         return x_fgm\n\
 ";
 
+var TFSource = "\
+from DeepPenAlgorithm import DeepPenAlgorithm\n\
+from cleverhans.tf2.attacks.fast_gradient_method import fast_gradient_method\n\
+import numpy as np\n\
+from tensorflow import Tensor\n\
+\n\
+class Solution(DeepPenAlgorithm):\n\
+    def run_algorithm(self, net, data) -> Tensor:\n\
+        eps = 0.1\n\
+        x_fgm = fast_gradient_method(net, data, eps, np.inf)\n\
+        return x_fgm\n\
+"
 var sources = {
-    420: DeepPenSource
+    420: TorchSource,
+    421: TFSource
 };
 
 var fileNames = {
@@ -817,6 +830,7 @@ var fileNames = {
     87: "script.fsx",
     88: "script.groovy",
     420:"algorithm.py",
+    421:"algorithm.py",
     1001: "main.c",
     1002: "main.cpp",
     1003: "main.c3",
