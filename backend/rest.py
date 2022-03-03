@@ -1,14 +1,21 @@
 from cgitb import reset
+from distutils.log import debug
 from flask import Flask, Response, request
 from flask_cors import CORS, cross_origin
 import pymongo
 import json
 from types import SimpleNamespace
 from bson.objectid import ObjectId
+import requests
 from flask_bcrypt import Bcrypt,generate_password_hash, check_password_hash
 import bcrypt
 import datetime
 import jwt
+from enum import Enum
+
+class Type(Enum):
+    PY_TORCH = 1
+    TENSORFLOW = 2
 
 
 app = Flask(__name__)
@@ -17,6 +24,7 @@ app.config['CORS_HEADERS'] = 'Content-Type'
 
 sandboxUrl = "http://127.0.0.1:2358"
 wait = False
+CURR_USER_ID = ""
 
 try:
     mongo = pymongo.MongoClient(
@@ -33,7 +41,7 @@ def auth(request):
     stored_token = db.tokens.find_one({"token" : request_token, "valid": True})
     if stored_token:
         return stored_token
-    else: 
+    else:
         return False
 
 def generate_token(user_id):
@@ -59,71 +67,16 @@ def authenticate():
             return Response(
                 status=401
             )
-    
 
-#################################GET METHOD
-@app.route("/test", methods=["GET"])
-def get_some_test():
+
+################################# PROJECTS
+@app.route("/projects", methods=["GET"])
+def get_all_projects():
     try:
-        data = list(db.test.find())
-
-        for user in data:
-            user["_id"]= str(user["_id"])
-        return Response(
-            response= json.dumps(data),
-            status=200,
-            mimetype="application/json"
-        )
-    except Exception as ex:
-        print(ex)
-        return Response(
-            response= json.dumps({
-                "message": "cannot read users"
-            }),
-            status= 500,
-            mimetype="application/json"
-        )
-
-@app.route("/submissions/<submission_token>", methods=["GET"])
-@cross_origin(supports_credentials=True)
-def get_submission(submission_token):
-    try:
-        url = sandboxUrl + f"/submissions/{submission_token}/?base64_encoded=true"
-        submission = requests.get(url)
-
-        res = submission.json()
-        print(res)
-
-        # save the submission data into the database
-
-
-        # data = request.get_json(force=True)
-        # tests = []
-        # for k in data.keys():
-        #     stat = data[k]["stats"]
-        #     tests.append({
-        #         "y_pred_ind" : stat["y_pred_ind"],
-        #         "y_pred_ind_adv" : stat["y_pred_ind_adv"],
-        #         "y_pred_val" : stat["y_pred_val"],
-        #         "y_pred_val_adv" : stat["y_pred_val_adv"],
-        #         "y_target" : stat["y_target"],
-        #         "x_sim" : stat["x_sim"],
-        #         "time" : stat["time"],
-        #         "accuracy" : stat["accuracy"],
-        #         "accuracy_adv" : stat["accuracy_adv"],
-        #         "mean_similarity" : stat["mean_similarity"]
-        #     })
-        # instance = {
-        #     "user_id": data["user_id"],
-        #     "tests": tests,
-        # }
-
-        # dbResponse= db.test_results.insert_one(instance)
-        # print(dbResponse.inserted_id)
-
+        projects = db.projects.find({"user_id": CURR_USER_ID})
 
         return Response(
-            response= json.dumps({res}),
+            response= json.dumps({"projects" : projects}),
             status= 200,
             mimetype="application/json",
         )
@@ -132,31 +85,107 @@ def get_submission(submission_token):
         print(ex)
 
 
-################################# POST METHOD
-@app.route("/test", methods=["POST"])
-def create_test():
+@app.route("/projects", methods=["POST"])
+def create_project():
     try:
-        instance= {
-            "name":request.form["name"],
-            "lastName": request.form["lastName"]
-            }
-        dbResponse= db.test.insert_one(instance)
+        d = datetime.datetime.utcnow()
+        name = ""
+        project_type = Type.TENSORFLOW
+        user_id = ""
+
+        instance = {
+            "name" : name,
+            "type" : project_type,
+            "user_id" : user_id,
+            "created_at" : d,
+            "updated_at" : d,
+            "submission_ids" : []
+        }
+
+        dbResponse = db.projects.insert_one(instance)
         print(dbResponse.inserted_id)
+
         return Response(
-            response= json.dumps({
-                "message":"user created",
-                "id": f"{dbResponse.inserted_id}"
-            }),
+            response= json.dumps({"message": "project created"}),
             status= 200,
-            mimetype="application/json"
+            mimetype="application/json",
         )
     except Exception as ex:
         print("********")
         print(ex)
 
-@app.route("/submissions", methods=["POST"])
+
+
+################################# SUBMISSIONS
+@app.route("/projects/<project_id>/submissions/<submission_token>", methods=["GET"])
 @cross_origin(supports_credentials=True)
-def handle_submission():
+def get_submission(project_id, submission_token):
+    try:
+        url = sandboxUrl + f"/submissions/{submission_token}/?base64_encoded=true"
+        submission = requests.get(url)
+
+        # find submission and save the test results
+        data = submission.get_json()
+        print(data)
+        data_samples = []
+        tests = {}
+        for k in data.keys():
+            stat = data[k]["stats"]
+            tests.append({
+                k: {
+                    "y_pred_ind" : stat["y_pred_ind"],
+                    "y_pred_ind_adv" : stat["y_pred_ind_adv"],
+                    "y_pred_val" : stat["y_pred_val"],
+                    "y_pred_val_adv" : stat["y_pred_val_adv"],
+                    "y_target" : stat["y_target"],
+                    "x_sim" : stat["x_sim"],
+                    "time" : stat["time"],
+                    "accuracy" : stat["accuracy"],
+                    "accuracy_adv" : stat["accuracy_adv"],
+                    "mean_similarity" : stat["mean_similarity"]
+                }
+            })
+
+        instance = {
+            "data_samples": data_samples,
+            "test_stats": tests
+        }
+
+        dbResponse= db.submissions.find_one_and_update({"token": submission_token}, {instance})
+        print(dbResponse.inserted_id)
+
+        return Response(
+            response= json.dumps({data}),
+            status= 200,
+            mimetype="application/json",
+        )
+    except Exception as ex:
+        print("********")
+        print(ex)
+
+
+@app.route("/projects/<project_id>/submissions", methods=["GET"])
+def get_all_project_submissions(project_id):
+    try:
+        projects = db.projects.find({"_id": project_id})
+
+        submissions = []
+        for id in projects["submission_ids"]:
+            submissions.append(db.submissions.find_one({"_id": id}))
+
+        return Response(
+            response= json.dumps({"projects" : submissions}),
+            status= 200,
+            mimetype="application/json",
+        )
+    except Exception as ex:
+        print("********")
+        print(ex)
+
+
+@app.route("/projects/<project_id>/submissions", methods=["POST"])
+@cross_origin(supports_credentials=True)
+def handle_submission(project_id):
     try:
         args = request.args
         body = request.get_json()
@@ -166,6 +195,31 @@ def handle_submission():
 
         res = submission.json()
         token = res["token"]
+
+        instance = {
+            "project_id" : project_id,
+            "token": token,
+            "params": body,
+        }
+
+        dbResponse= db.submissions.insert_one(instance)
+        print(dbResponse.inserted_id)
+
+        # Find project and save the submission id
+        project = db.projects.find_one({"user_id": CURR_USER_ID})
+
+        updated_submission_ids = project["submission_ids"].copy()
+        updated_submission_ids.append(dbResponse.inserted_id)
+        d = datetime.datetime.utcnow()
+
+        dbResponse = db.project.update_one(
+            {"_id" : project["_id"]},
+            {
+                "submission_ids":updated_submission_ids,
+                "updated_at": d
+            })
+        print(dbResponse.inserted_id)
+
         return Response(
             response= json.dumps({"token" : token}),
             status= 200,
@@ -175,82 +229,10 @@ def handle_submission():
         print("********")
         print(ex)
 
-##############################PATCH METHOD
-@app.route("/test/<id>", methods=["PATCH"])
-def update_test(id):
-    try:
-        dbResponse= db.test.update_one(
-            {"_id": ObjectId(id)},
-            {"$set": {"name": request.form["name"]}},
-            # {"$set": {"lastName": request.form["lastName"]}}
-        )
-        ##this can only update the name entry only, ADD THE REST OF THE ENTRIES
 
-        if dbResponse.modified_count==1:
-
-            return Response(
-                response= json.dumps(
-                    {"message": "user updated"}
-                ),
-                status=200,
-                mimetype="application/json"
-            )
-
-        return Response(
-            response= json.dumps(
-                {"message": "nothing to update"}
-            ),
-            status=200,
-            mimetype="application/json"
-        )
-
-    except Exception as ex:
-        print(ex)
-        return Response(
-            response= json.dumps({
-                "message": "sorry cannot update user"
-            }),
-            status= 500,
-            mimetype="application/json"
-        )
-
-############################# DELETE METHOD
-@app.route("/test/<id>", methods=["DELETE"])
-def delete_user(id):
-    try:
-        dbResponse= db.test.delete_one(
-            {"_id": ObjectId(id)}
-        )
-        if dbResponse.deleted_count==1:
-
-            return Response(
-                response= json.dumps(
-                    {"message": "user deleted", "id": f"{id}"}
-                ),
-                status=200,
-                mimetype="application/json"
-            )
-        return Response(
-            response= json.dumps(
-                {"message": "user not found", "id": f"{id}"}
-            ),
-            status=200,
-            mimetype="application/json"
-        )
-
-
-    except Exception as ex:
-        print(ex)
-        return Response(
-            response= json.dumps({
-                "message": "sorry cannot delete user"
-            }),
-            status= 500,
-            mimetype="application/json"
-        )
-
+############################## AUTH
 @app.route("/register", methods=["POST"])
-def register(): 
+def register():
     try:
         db.users.insert_one({
             "username": request.form["username"],
@@ -262,17 +244,16 @@ def register():
             }),
             status=200,
         )
-    except Exception as ex: 
+    except Exception as ex:
         return Response(
             response= json.dumps({"exception": ex}),
             status=500
-        ) 
+        )
+
 
 @app.route("/login", methods=["POST"])
 def login():
-
-
-    try: 
+    try:
         print("Logging in...")
         request_data = request.get_json()
         print(request_data)
@@ -291,6 +272,8 @@ def login():
         db.tokens.update_many({"user" : ObjectId(user["_id"])}, {"$set": {"valid": False}})
         db.tokens.insert_one({"user": ObjectId(user["_id"]), "token": user_token, "valid": True})
 
+        CURR_USER_ID = user["_id"]
+
         return Response(
             response= json.dumps({
                 "user": json.dumps(user),
@@ -304,16 +287,18 @@ def login():
             status=500
         )
 
+
 @app.route("/test", methods=["POST"])
-def test(): 
-    if auth(request): 
+def test():
+    if auth(request):
         return Response(status=200)
-    else: 
+    else:
         return Response(status=401)
+
 
 @app.route("/user/<id>", methods=["GET"])
 def user(id):
-    try:  
+    try:
         auth(request)
         user = db.users.find_one({"_id": ObjectId(id)})
         del user["password"]
@@ -324,7 +309,7 @@ def user(id):
             }),
             status=200
         )
-    except Exception as ex: 
+    except Exception as ex:
         print(ex)
         return Response(
             status=500
