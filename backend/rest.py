@@ -271,12 +271,14 @@ def login():
 
     try: 
         print("Logging in...")
+        request_data = request.get_json()
+        print(request_data)
         user = db.users.find_one({
-            "username": "Aron"
+            "username": request_data['user']
         })
 
         user["_id"] = str(user["_id"])
-        if not bcrypt.checkpw(request.form["password"].encode('utf8'), user["password"]):
+        if not bcrypt.checkpw(request_data["password"].encode('utf8'), user["password"]):
             return Response(
                 status=401
             )
@@ -295,7 +297,7 @@ def login():
         )
     except Exception as ex:
         return Response(
-            response= json.dumps({"exception": ex}),
+            response= json.dumps({"exception": "error"}),
             status=500
         )
 
@@ -328,6 +330,10 @@ def user(id):
 @app.after_request
 def apply_header(response):
     response.headers["Access-Control-Allow-Origin"] = "*"
+    response.headers["Access-Control-Allow-Methods"] = "GET,HEAD,OPTIONS,POST,PUT"
+    response.headers["Access-Control-Allow-Credentials"] = "true"
+    response.headers["Access-Control-Allow-Headers"] = "Access-Control-Allow-Headers, Origin,Accept, X-Requested-With, Content-Type, Access-Control-Request-Method, Access-Control-Request-Headers"
+
     return response
 
 if __name__ == "__main__":
