@@ -1,4 +1,4 @@
-var defaultUrl = localStorageGetItem('api-url') || 'https://127.0.0.1:6969';
+var defaultUrl = localStorageGetItem('api-url') || 'http://127.0.0.1:6969';
 var apiUrl = defaultUrl;
 var wait = localStorageGetItem('wait') || false;
 var check_timeout = 300;
@@ -199,6 +199,8 @@ function handleError(jqXHR, textStatus, errorThrown) {
 }
 
 function handleRunError(jqXHR, textStatus, errorThrown) {
+  deleteCookie('token');
+  window.location.replace('http://localhost:8001/login.html');
   handleError(jqXHR, textStatus, errorThrown);
   $runBtn.removeClass('loading');
 }

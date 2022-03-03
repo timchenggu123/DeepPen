@@ -52,6 +52,9 @@ def generate_token(user_id):
 @app.before_request
 def authenticate():
     if request.endpoint != "login":
+        return Response(
+            status=401
+        )
         if not auth(request):
             return Response(
                 status=401
