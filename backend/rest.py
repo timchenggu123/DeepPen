@@ -13,7 +13,7 @@ import datetime
 import jwt
 from enum import Enum
 
-class Type(Enum):
+class ProjectType(int, Enum):
     PY_TORCH = 1
     TENSORFLOW = 2
 
@@ -90,7 +90,7 @@ def create_project():
     try:
         d = datetime.datetime.utcnow()
         name = ""
-        project_type = Type.TENSORFLOW
+        project_type = ProjectType.TENSORFLOW
         user_id = ""
 
         instance = {
