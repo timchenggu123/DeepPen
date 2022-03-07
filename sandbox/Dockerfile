@@ -6,9 +6,6 @@ LABEL homepage=$JUDGE0_HOMEPAGE
 ENV JUDGE0_SOURCE_CODE "https://github.com/judge0/judge0"
 LABEL source_code=$JUDGE0_SOURCE_CODE
 
-ENV JUDGE0_MAINTAINER "Herman Zvonimir Došilović <hermanz.dosilovic@gmail.com>"
-LABEL maintainer=$JUDGE0_MAINTAINER
-
 ENV PATH "/usr/local/ruby-2.7.0/bin:/opt/.gem/bin:$PATH"
 ENV GEM_HOME "/opt/.gem/"
 
@@ -35,8 +32,14 @@ RUN apt-get update && \
     apt-get install -y bazel gfortran libopenblas-dev liblapack-dev &&\
     rm -rf /var/lib/apt/lists/*
     
+#Requirement for ONNX
+RUN apt-get update && \
+    apt-get -y install cmake protobuf-compiler libprotoc-dev&&\
+    rm -rf /var/lib/apt/lists/*
+
 RUN apt-get update &&\
     apt-get install -y python3 python3-pip &&\
+    pip3 install --upgrade pip &&\
     pip3 install\
     torch   \ 
     torchvision &&\
@@ -52,13 +55,7 @@ RUN apt-get update &&\
     scipy &&     \
     rm -rf /var/lib/apt/lists/* 
 
-#Requirement for ONNX
-RUN apt-get update && \
-    apt-get -y install cmake protobuf-compiler libprotoc-dev&&\
-    rm -rf /var/lib/apt/lists/*
-
 RUN apt-get update &&\
-    pip3 install --upgrade pip &&\
     pip3 install \
     typing-extensions \
     tensorflow==2.7 \
@@ -66,10 +63,6 @@ RUN apt-get update &&\
     onnx-tf \
     &&\
     rm -rf /var/lib/apt/lists/* 
-
-RUN apt-get update &&\
-    pip3 install \
-    deeprobust
 
 # #custom code end
 ENV VIRTUAL_PORT 2358

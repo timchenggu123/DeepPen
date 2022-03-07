@@ -9,7 +9,7 @@ x-logging:
 
 services:
   server:
-    image: torch/test:latest
+    image: deeppen/sandbox:latest
     command: ["/api/scripts/server"]
     volumes:
       - ./judge0.conf:/judge0.conf:ro
@@ -20,7 +20,7 @@ services:
     restart: always
 
   worker:
-    image: torch/test:latest
+    image: deeppen/sandbox:latest
     command: ["./scripts/workers"]
     volumes:
       - ./judge0.conf:/judge0.conf:ro

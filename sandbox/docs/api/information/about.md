@@ -8,5 +8,5 @@ Returns general information.
             "version": "1.5.0",
             "homepage": "https://judge0.com",
             "source_code": "https://github.com/judge0/judge0",
-            "maintainer": "Herman Zvonimir Došilović <hermanz.dosilovic@gmail.com>"
+            "": "Herman Zvonimir Došilović <hermanz.dosilovic@gmail.com>"
         }

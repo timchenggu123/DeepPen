@@ -235,6 +235,7 @@ function createAdvTable(data){
 
         canvas.width=28;
         canvas.height=28;
+        canvas.className="zoomable";
         drawAdvSample(test_data.x[i],canvas);;
         wrapper.append(canvas,text)
         td.append(wrapper);
@@ -261,6 +262,7 @@ function createAdvTable(data){
             let canvas = document.createElement("canvas");
             canvas.width=28;
             canvas.height=28;
+            canvas.className="zoomable"
             drawAdvSample(results_data[fields[j]].adv[i],canvas);
             wrapper.append(canvas, text)
 

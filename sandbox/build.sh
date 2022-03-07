@@ -1,3 +1,3 @@
 #!/bin/bash
-docker build . -t torch/test
-docker image prune
+docker build . -t deeppen/sandbox
+yes | docker image prune

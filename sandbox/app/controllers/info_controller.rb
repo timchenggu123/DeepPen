@@ -14,8 +14,7 @@ class InfoController < ApplicationController
     render json: {
       version: ENV["JUDGE0_VERSION"],
       homepage: ENV["JUDGE0_HOMEPAGE"],
-      source_code: ENV["JUDGE0_SOURCE_CODE"],
-      maintainer: ENV["JUDGE0_MAINTAINER"]
+      source_code: ENV["JUDGE0_SOURCE_CODE"]
     }
   end
 
