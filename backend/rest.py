@@ -1,4 +1,5 @@
 from cgitb import reset
+from cmath import e
 from distutils.log import debug
 from flask import Flask, Response, request
 from flask_cors import CORS, cross_origin
@@ -27,12 +28,18 @@ wait = False
 CURR_USER_ID = ""
 
 try:
+    # mongo = pymongo.MongoClient(
+    #     "mongodb+srv://martin:DeepPen@cluster0.ldso5.mongodb.net/DeepPen?retryWrites=true&w=majority"
+    # )
     mongo = pymongo.MongoClient(
-        "mongodb+srv://martin:DeepPen@cluster0.ldso5.mongodb.net/DeepPen?retryWrites=true&w=majority"
+        host = [ str("mongodb") + ":" + str(27017) ],
+        serverSelectionTimeoutMS = 3000, # 3 second timeout
+        username = "root",
+        password = "DeepPenetration",
     )
     db = mongo.db
     mongo.server_info()
-
+    print("Successfully connected to db")
 except:
     print("ERROR - Cannot connect to db")
 
@@ -283,7 +290,7 @@ def login():
         )
     except Exception as ex:
         return Response(
-            response= json.dumps({"exception": "error"}),
+            response= json.dumps({f"exception": "{ex}"}),
             status=500
         )
 

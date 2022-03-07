@@ -15,3 +15,12 @@ services:
     privileged: true
     <<: *default-logging
     restart: always
+
+  mongodb:
+    image: mongo:latest
+    restart: always
+    <<: *default-logging
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: DeepPenetration
+
