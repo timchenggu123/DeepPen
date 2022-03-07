@@ -325,4 +325,4 @@ def apply_header(response):
     return response
 
 if __name__ == "__main__":
-    app.run(port=6969, debug=True)
+    app.run(host="0.0.0.0", port=6969, debug=True)
