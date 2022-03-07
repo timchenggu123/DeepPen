@@ -194,8 +194,9 @@ input[type="text"] {
 }
 
 #ide-container{
-    height:100%;
+    height:90%;
     width: 90%;
+    margin-bottom: 40px;
 }
 
 #chart-segment{
@@ -278,6 +279,21 @@ body ::-webkit-scrollbar {
     height:400px;
     overflow:scroll;
 }
+
+#transfer-nn-configs-table{
+    height: 400px;
+    overflow: scroll;
+}
+
+.zoomable:hover {
+    z-index: 1000000;
+    transform: scale(3); /* (150% zoom - Note: if the zoom is too large, it will go outside of the viewport) */
+  }
+
+#transfer-menu{
+    overflow: scroll;
+}
+
 /* #results{
     display: none;
 } */

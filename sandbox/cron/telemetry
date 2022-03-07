@@ -1,0 +1,1 @@
+0 */12 * * * bash -c "source /api/tmp/environment; /api/bin/telemetry &> /api/log/telemetry.log"

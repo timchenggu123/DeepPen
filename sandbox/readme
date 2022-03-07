@@ -1,0 +1,4 @@
+#Quick Start
+./build.sh
+docker-compose up
+
