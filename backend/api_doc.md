@@ -27,7 +27,7 @@
 : creates a new project for the user. Nothing needs to be passed in the body of the request. Will return the project_id of the new project
 
 - POST `/projects/<project_id>`
-: saves or updates the existing project. The body can include any of the following field: `name, type, source_code, language_id, stdin, stdout, stderr, compile_output, message, time, memory, status, compiler_options, command_line_arguments`
+: saves or updates the existing project. The body can include any of the following field: `name, type, source_code, language_id, stdin, stdout, stderr, compile_output, message, time, memory, status, compiler_options, command_line_arguments`. To make a project the default project for a given user, just send the POST request with the body as follows: `{ "make_default": true }`
 
 ### Submissions
 - GET `/projects/<project_id>/submissions/<submission_token>`
