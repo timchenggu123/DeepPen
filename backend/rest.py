@@ -75,6 +75,7 @@ def authenticate():
 
 ################################# PROJECTS
 @app.route("/projects", methods=["GET"])
+@cross_origin(supports_credentials=True)
 def get_all_projects():
     try:
         projects = db.projects.find({"user_id": CURR_USER_ID})
@@ -88,8 +89,37 @@ def get_all_projects():
         print("********")
         print(ex)
 
+        return Response(
+            response= json.dumps({"message": "Unable to get all projects", "ex": ex.message}),
+            status= 500,
+            mimetype="application/json",
+        )
 
-@app.route("/projects", methods=["POST"])
+
+@app.route("/projects/<project_id>", methods=["GET"])
+@cross_origin(supports_credentials=True)
+def get_project_by_id(project_id):
+    try:
+        projects = db.projects.find({"_id": project_id})
+
+        return Response(
+            response= json.dumps({"projects" : projects}),
+            status= 200,
+            mimetype="application/json",
+        )
+    except Exception as ex:
+        print("********")
+        print(ex)
+
+        return Response(
+            response= json.dumps({"message": f"Unable to get project {project_id}", "ex": ex.message}),
+            status= 500,
+            mimetype="application/json",
+        )
+
+
+@app.route("/projects/create_new", methods=["POST"])
+@cross_origin(supports_credentials=True)
 def create_project():
     try:
         d = datetime.datetime.utcnow()
@@ -110,7 +140,7 @@ def create_project():
         print(dbResponse.inserted_id)
 
         return Response(
-            response= json.dumps({"message": "project created"}),
+            response= json.dumps({"message": "project created", "project_id": dbResponse.inserted_id}),
             status= 200,
             mimetype="application/json",
         )
@@ -118,7 +148,54 @@ def create_project():
         print("********")
         print(ex)
 
+        return Response(
+            response= json.dumps({"message": "Unable to create new project", "ex": ex.message}),
+            status= 500,
+            mimetype="application/json",
+        )
 
+
+@app.route("/projects/<project_id>", methods=["POST"])
+@cross_origin(supports_credentials=True)
+def save_project(project_id):
+    try:
+        body = request.get_json()
+
+        project = db.projects.find_one({"_id": project_id})
+
+        if (project == None):
+            return Response(
+                response= json.dumps({"message": f"The project {project_id} does not exist."}),
+                status= 404,
+                mimetype="application/json",
+            )
+
+        if (body["make_default"] == True):
+            dbResponse = db.users.update_one({"_id": CURR_USER_ID}, {"default_project": project_id})
+
+        dbResponse = db.projects.update_one({"_id": project_id}, body)
+
+        if (not dbResponse.matchedCount == 0 and not dbResponse.modifiedCount == 0):
+            return Response(
+                response= json.dumps({"message": "project saved/updated"}),
+                status= 200,
+                mimetype="application/json",
+            )
+        else:
+            return Response(
+                response= json.dumps({"message": f"Unable to update project {project_id}"}),
+                status= 500,
+                mimetype="application/json",
+            )
+    except Exception as ex:
+        print("********")
+        print(ex)
+
+        return Response(
+            response= json.dumps({"message": f"Unable to update project {project_id}", "ex": ex.message}),
+            status= 500,
+            mimetype="application/json",
+        )
 
 ################################# SUBMISSIONS
 @app.route("/projects/<project_id>/submissions/<submission_token>", methods=["GET"])
@@ -157,9 +234,10 @@ def get_submission(project_id, submission_token):
 
         dbResponse= db.submissions.find_one_and_update({"token": submission_token}, {instance})
         print(dbResponse.inserted_id)
+        submission = db.submissions.find_one({"token": submission_token})
 
         return Response(
-            response= json.dumps({data}),
+            response= json.dumps({submission}),
             status= 200,
             mimetype="application/json",
         )
@@ -167,8 +245,15 @@ def get_submission(project_id, submission_token):
         print("********")
         print(ex)
 
+        return Response(
+            response= json.dumps({"message": f"Unable to fetch submission {submission_token}", "ex": ex.message}),
+            status= 500,
+            mimetype="application/json",
+        )
+
 
 @app.route("/projects/<project_id>/submissions", methods=["GET"])
+@cross_origin(supports_credentials=True)
 def get_all_project_submissions(project_id):
     try:
         projects = db.projects.find({"_id": project_id})
@@ -185,6 +270,12 @@ def get_all_project_submissions(project_id):
     except Exception as ex:
         print("********")
         print(ex)
+
+        return Response(
+            response= json.dumps({"message": f"Unable to fetch submissions for project {project_id}", "ex": ex.message}),
+            status= 500,
+            mimetype="application/json",
+        )
 
 
 @app.route("/projects/<project_id>/submissions", methods=["POST"])
@@ -210,7 +301,14 @@ def handle_submission(project_id):
         print(dbResponse.inserted_id)
 
         # Find project and save the submission id
-        project = db.projects.find_one({"user_id": CURR_USER_ID})
+        project = db.projects.find_one({"_id": project_id})
+
+        if (project == None):
+            return Response(
+                response= json.dumps({"message": f"Unable to find project {project_id}"}),
+                status= 500,
+                mimetype="application/json",
+            )
 
         updated_submission_ids = project["submission_ids"].copy()
         updated_submission_ids.append(dbResponse.inserted_id)
@@ -232,6 +330,12 @@ def handle_submission(project_id):
     except Exception as ex:
         print("********")
         print(ex)
+
+        return Response(
+            response= json.dumps({"message": "Unable to submit submission", "ex": ex.message}),
+            status= 500,
+            mimetype="application/json",
+        )
 
 
 ############################## AUTH

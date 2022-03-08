@@ -75,7 +75,7 @@ var layoutConfig = {
                         componentState: {
                             readOnly: true
                         }
-                    } 
+                    }
                 ]
             }, {
                 type: "stack",
@@ -87,7 +87,7 @@ var layoutConfig = {
                         componentState: {
                             readOnly: true
                         }
-                    }, 
+                    },
                     // {
                     //     type: "component",
                     //     componentName: "compile output",
@@ -312,11 +312,12 @@ function setProjectName(){
     project_name.innerText=val?val:curr_name;
 }
 function loadSavedSource() {
+    project_id = ""
     snippet_id = getIdFromURI();
 
     if (snippet_id.length == 36) {
         $.ajax({
-            url: apiUrl + "/submissions/" + snippet_id + "?fields=source_code,language_id,stdin,stdout,stderr,compile_output,message,time,memory,status,compiler_options,command_line_arguments&base64_encoded=true",
+            url: apiUrl + "/projects/" + project_id + "/submissions/" + snippet_id + "?fields=source_code,language_id,stdin,stdout,stderr,compile_output,message,time,memory,status,compiler_options,command_line_arguments&base64_encoded=true",
             type: "GET",
             success: function(data, textStatus, jqXHR) {
                 sourceEditor.setValue(decode(data["source_code"]));
@@ -367,7 +368,7 @@ function run() {
     data_configs={
         random: data_configs_random,
         n_test_data: data_configs_n_test_data,
-        indices: data_configs_indices 
+        indices: data_configs_indices
     }
     nn_configs=readNNConfigsTableData2Array('nn-configs-table')
     transfer_nn_configs=readNNConfigsTableData2Array('transfer-nn-configs-table')
@@ -376,7 +377,7 @@ function run() {
         transfer_nn_configs:JSON.stringify(transfer_nn_configs),
         data_configs:JSON.stringify(data_configs)
     }
-   
+
     var sourceValue = encode(sourceEditor.getValue());
     // var stdinValue = encode(stdinEditor.getValue());
     var stdinValue=encode(JSON.stringify(experiment_configs));
@@ -397,10 +398,13 @@ function run() {
         redirect_stderr_to_stdout: redirectStderrToStdout
     };
 
+    // Need to populate project_id
+    var project_id = "";
+
     var sendRequest = function(data) {
         timeStart = performance.now();
         $.ajax({
-            url: apiUrl + `/submissions?base64_encoded=true&wait=${wait}`,
+            url: apiUrl + `/projects/${project_id}/submissions?base64_encoded=true&wait=${wait}`,
             type: "POST",
             async: true,
             contentType: "application/json",
@@ -438,12 +442,12 @@ function run() {
     }else{
         sendRequest(data);
     }
-   
+
 }
 
-function fetchSubmission(submission_token) {
+function fetchSubmission(project_id, submission_token) {
     $.ajax({
-        url: apiUrl + "/submissions/" + submission_token + "?base64_encoded=true",
+        url: apiUrl + "/projects/" + project_id + "/submissions/" + submission_token + "?base64_encoded=true",
         type: "GET",
         async: true,
         success: function (data, textStatus, jqXHR) {
@@ -592,7 +596,7 @@ $(document).ready(function () {
 
     $navigationMessage = $("#navigation-message span");
     $updates = $("#judge0-more");
-    
+
     $(`input[name="editor-mode"][value="${editorMode}"]`).prop("checked", true);
     $("input[name=\"editor-mode\"]").on("change", function(e) {
         editorMode = e.target.value;
