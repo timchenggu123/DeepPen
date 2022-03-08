@@ -1,4 +1,4 @@
-const publicPages = 'http://localhost:8001/login.html', 'http://localhost:8001/register.html', 'http://localhost:8001/landing.html']
+const publicPages = ['http://localhost:8001/login.html', 'http://localhost:8001/register.html', 'http://localhost:8001/landing.html']
 
 function getCookie(name) {
   var v = document.cookie.match('(^|;) ?' + name + '=([^;]*)(;|$)');
