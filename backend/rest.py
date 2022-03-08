@@ -23,7 +23,7 @@ app = Flask(__name__)
 CORS(app, support_credentials=True)
 app.config['CORS_HEADERS'] = 'Content-Type'
 
-sandboxUrl = "http://127.0.0.1:2358"
+sandboxUrl = "sandbox:2358"
 wait = False
 CURR_USER_ID = ""
 
@@ -66,7 +66,7 @@ def generate_token(user_id):
 
 @app.before_request
 def authenticate():
-    if request.endpoint != "login":
+    if request.endpoint != "login" and request.endpoint != "register":
         if not auth(request):
             return Response(
                 status=401
@@ -238,9 +238,10 @@ def handle_submission(project_id):
 @app.route("/register", methods=["POST"])
 def register():
     try:
+        request_data = request.get_json()
         db.users.insert_one({
-            "username": request.form["username"],
-            "password": bcrypt.hashpw(request.form["password"].encode('utf-8'), bcrypt.gensalt(10))
+            "username": request_data['user'],
+            "password": bcrypt.hashpw(request_data['password'].encode('utf-8'), bcrypt.gensalt(10))
         })
         return Response(
             response= json.dumps({
@@ -266,7 +267,7 @@ def login():
         })
 
         user["_id"] = str(user["_id"])
-        if not bcrypt.checkpw(request_data["password"].encode('utf8'), user["password"]):
+        if not bcrypt.checkpw(request_data["password"].encode('utf-8'), user["password"]):
             return Response(
                 status=401
             )
@@ -287,7 +288,7 @@ def login():
         )
     except Exception as ex:
         return Response(
-            response= json.dumps({f"exception": "{ex}"}),
+            response= json.dumps({"exception": f"{ex}"}),
             status=500
         )
 

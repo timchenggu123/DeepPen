@@ -37,9 +37,12 @@ RUN apt-get update &&\
     six==1.16.0 \
     SQLAlchemy==1.4.23 \
     Werkzeug==2.0.1 \
-    WTForms==2.3.3 \
-    jwt==1.3.1 &&\
+    WTForms==2.3.3 &&\
     rm -rf /var/lib/apt/lists/*
+
+RUN pip3 uninstall JWT &&\
+    pip3 uninstall PyJWT &&\
+    pip install PyJWT
 
 WORKDIR /server
 

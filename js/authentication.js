@@ -15,8 +15,8 @@ function deleteCookie(name) {
 
 window.addEventListener('load', function () {
   let token = getCookie('token');
-  console.log(window.location);
-  if (!token && window.location.href != 'http://localhost:8001/login.html') {
-    window.location.replace('http://localhost:8001/login.html');
-  }
+  // console.log(window.location);
+  // if (!token && window.location.href != 'http://localhost:8001/login.html') {
+  //   window.location.replace('http://localhost:8001/login.html');
+  // }
 });

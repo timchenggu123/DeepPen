@@ -1,5 +1,5 @@
 
-var defaultUrl = localStorageGetItem("api-url") || "https://127.0.0.1:2358";
+var defaultUrl = localStorageGetItem("api-url") || "http://127.0.0.1:2358";
 var apiUrl = defaultUrl;
 var wait = localStorageGetItem("wait") || false;
 var check_timeout = 300;

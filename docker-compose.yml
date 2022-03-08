@@ -1,0 +1,72 @@
+version: "2"
+
+x-logging:
+  &default-logging
+  logging:
+    driver: json-file
+    options:
+      max-size: 100M
+
+services:
+  sandbox:
+    image: deeppen/sandbox:latest
+    command: ["/api/scripts/server"]
+    volumes:
+      - ./sandbox/judge0.conf:/judge0.conf:ro
+    ports:
+      - "2358:2358"
+    privileged: true
+    <<: *default-logging
+    restart: always
+
+  worker:
+    image: deeppen/sandbox:latest
+    command: ["./scripts/workers"]
+    volumes:
+      - ./sandbox/judge0.conf:/judge0.conf:ro
+    privileged: true
+    <<: *default-logging
+    restart: always
+
+  pgdb:
+    image: postgres:13.0
+    env_file: ./sandbox/judge0.conf
+    volumes:
+      - postgres-data:/var/lib/postgresql/data/
+    <<: *default-logging
+    restart: always
+
+  redis:
+    image: redis:6.0
+    command: [
+      "bash", "-c",
+      'docker-entrypoint.sh --appendonly yes --requirepass "$$REDIS_PASSWORD"'
+    ]
+    env_file: ./sandbox/judge0.conf
+    volumes:
+      - redis-data:/data
+    <<: *default-logging
+    restart: always
+
+  backend:
+    image: deeppen/backend:latest
+    ports:
+      - "6969:6969"
+    privileged: true
+    <<: *default-logging
+    restart: always
+
+  mongodb:
+    image: mongo:latest
+    restart: always
+    <<: *default-logging
+    volumes:
+      - mongo-data:/data/db
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: DeepPenetration
+
+volumes:
+  postgres-data:
+  redis-data:
+  mongo-data:
