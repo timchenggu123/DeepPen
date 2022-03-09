@@ -275,3 +275,81 @@ function createAdvTable(data){
     container.append(table);
     $('table').tablesort()
 }
+
+function createProjectsTable(){
+
+    let project = getProjects();
+
+    let projects = [{ id:1, name: 'test', type: 'type1', user_id: 1234, created_at: '2022-02-02', updated_at: '2022-02-03' },
+    { id:2, name: 'test', type: 'type2', user_id: 1234, created_at: '2022-02-02', updated_at: '2022-02-03' }, 
+    { id:1, name: 'test', type: 'type1', user_id: 1234, created_at: '2022-02-02', updated_at: '2022-02-03' }, 
+    { id:3, name: 'test', type: 'type1', user_id: 1234, created_at: '2022-02-02', updated_at: '2022-02-03' }];
+
+    const container = document.getElementById("projects-table-container");
+    //while(container.firstChild) container.removeChild(container.firstChild)
+
+    let table = document.createElement("table");
+    table.className="ui sortable celled table";
+    table.id="projects-table"
+
+    let thead = document.createElement("thead");
+    let tr = document.createElement("tr");
+
+    let th1 = document.createElement("th");
+    let th2 = document.createElement("th");
+    let th3 = document.createElement("th");
+    let th4 = document.createElement("th");
+    let th5 = document.createElement("th");
+    
+    tr.append(th1);
+    tr.append(th2);
+    tr.append(th3);
+    tr.append(th4);
+    tr.append(th5)
+
+    th1.innerHTML = "No."
+    th2.innerHTML = "Name";
+    th3.innerHTML = "Type";
+    th4.innerHTML = "Created At";
+    th5.innerHTML = "Updated At";
+
+    thead.append(tr);
+    table.append(thead);
+
+    let tbody = document.createElement("tbody");
+    tbody.style.overflow="scroll";
+    let num = 1;
+
+    projects.forEach((project) => {
+        let row = document.createElement("tr");
+
+        let td1 = document.createElement('td');
+        let td2 = document.createElement('td');
+        let td3 = document.createElement('td');
+        let td4 = document.createElement('td');
+        let td5 = document.createElement('td');
+    
+        td1.innerHTML = num.toString();
+        td2.innerHTML = project.name;
+        td3.innerHTML = project.type;
+        td4.innerHTML = project.created_at;
+        td5.innerHTML = project.updated_at;
+
+        row.appendChild(td1);
+        row.appendChild(td2);
+        row.appendChild(td3);
+        row.appendChild(td4);
+        row.appendChild(td5);
+    
+        tbody.append(row);
+        num += 1;
+    });
+    
+    table.append(tbody);
+    container.append(table);
+    $('table').tablesort()
+}
+
+function saveProject(){
+
+}

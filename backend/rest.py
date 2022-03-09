@@ -1,12 +1,14 @@
 from cgitb import reset
 from cmath import e
 from distutils.log import debug
-from flask import Flask, Response, request
+from email import header
+from flask import Flask, Response, request, session
 from flask_cors import CORS, cross_origin
 import pymongo
 import json
 from types import SimpleNamespace
 from bson.objectid import ObjectId
+from bson.json_util import dumps
 import requests
 from flask_bcrypt import Bcrypt,generate_password_hash, check_password_hash
 import bcrypt
@@ -44,8 +46,16 @@ except:
     print("ERROR - Cannot connect to db")
 
 def auth(request):
+<<<<<<< Updated upstream
     request_token = str(request.headers['Authorization'])
     stored_token = db.tokens.find_one({"token" : request_token, "valid": True})
+=======
+    args = request.args
+    bearer = args.get('bearer')
+    app.logger.info(f"print: {args}")
+
+    stored_token = db.tokens.find_one({"token" : bearer, "valid": True})
+>>>>>>> Stashed changes
     if stored_token:
         return stored_token
     else:
@@ -74,16 +84,19 @@ def authenticate():
                 status=401
             )
 
-
 ################################# PROJECTS
 @app.route("/projects", methods=["GET"])
-@cross_origin(supports_credentials=True)
+@cross_origin()
 def get_all_projects():
     try:
         projects = db.projects.find({"user_id": CURR_USER_ID})
+        for p in projects:
+            app.logger.info(f"p: {p}")
+
+        app.logger.info(f"USER: {CURR_USER_ID}")
 
         return Response(
-            response= json.dumps({"projects" : projects}),
+            response= dumps(projects),
             status= 200,
             mimetype="application/json",
         )
@@ -136,18 +149,17 @@ def create_project(body):
 
 
 @app.route("/projects", methods=["POST"])
-@cross_origin(supports_credentials=True)
+@cross_origin()
 def save_project():
     try:
         body = request.get_json()
 
         # project_id is not given
         # creates new project
-        if not body["project_id"]:
+        if "project_id" not in body:
             project_id = create_project(body)
-
             return Response(
-                response= json.dumps({"message": "created and saved project", "project_id": project_id}),
+                response= json.dumps({"message": "created and saved project", "project_id": str(project_id)}),
                 status= 200,
                 mimetype="application/json",
             )
@@ -340,10 +352,12 @@ def register():
 @app.route("/login", methods=["POST"])
 def login():
     try:
+<<<<<<< Updated upstream
         app.logger.info("request")
         app.logger.info(request.headers["authorization"])
+=======
+>>>>>>> Stashed changes
         request_data = request.get_json()
-        print(request_data)
         user = db.users.find_one({
             "username": request_data['user']
         })
@@ -360,6 +374,8 @@ def login():
         db.tokens.insert_one({"user": ObjectId(user["_id"]), "token": user_token, "valid": True})
 
         CURR_USER_ID = user["_id"]
+        app.logger.info(f"USER___IDDD: {CURR_USER_ID}")
+
 
         return Response(
             response= json.dumps({
@@ -440,7 +456,11 @@ def apply_header(response):
     response.headers["Access-Control-Allow-Origin"] = "*"
     response.headers["Access-Control-Allow-Methods"] = "GET,HEAD,OPTIONS,POST,PUT"
     response.headers["Access-Control-Allow-Credentials"] = "true"
+<<<<<<< Updated upstream
     response.headers["Access-Control-Allow-Headers"] = "Access-Control-Allow-Headers, Origin,Accept, X-Requested-With, Content-Type, Access-Control-Request-Method, Access-Control-Request-Headers, authorization"
+=======
+    response.headers["Access-Control-Allow-Headers"] = "Access-Control-Allow-Headers, Origin,Accept, X-Requested-With, Content-Type, Access-Control-Request-Method, Access-Control-Request-Headers, Authorization"
+>>>>>>> Stashed changes
 
     return response
 
