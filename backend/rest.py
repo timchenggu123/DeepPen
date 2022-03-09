@@ -118,75 +118,62 @@ def get_project_by_id(project_id):
         )
 
 
-@app.route("/projects/create_new", methods=["POST"])
+def create_project(body):
+    d = datetime.datetime.utcnow()
+
+    instance = {
+        **body,
+        "created_at": d,
+        "updated_at": d,
+        "submission_ids": []
+    }
+
+    dbResponse = db.projects.insert_one(instance)
+    return dbResponse.inserted_id
+
+
+
+@app.route("/projects", methods=["POST"])
 @cross_origin(supports_credentials=True)
-def create_project():
-    try:
-        d = datetime.datetime.utcnow()
-        name = ""
-        project_type = ProjectType.TENSORFLOW
-        user_id = ""
-
-        instance = {
-            "name" : name,
-            "type" : project_type,
-            "user_id" : user_id,
-            "created_at" : d,
-            "updated_at" : d,
-            "submission_ids" : []
-        }
-
-        dbResponse = db.projects.insert_one(instance)
-        print(dbResponse.inserted_id)
-
-        return Response(
-            response= json.dumps({"message": "project created", "project_id": dbResponse.inserted_id}),
-            status= 200,
-            mimetype="application/json",
-        )
-    except Exception as ex:
-        print("********")
-        print(ex)
-
-        return Response(
-            response= json.dumps({"message": "Unable to create new project", "ex": ex.message}),
-            status= 500,
-            mimetype="application/json",
-        )
-
-
-@app.route("/projects/<project_id>", methods=["POST"])
-@cross_origin(supports_credentials=True)
-def save_project(project_id):
+def save_project():
     try:
         body = request.get_json()
 
-        project = db.projects.find_one({"_id": project_id})
+        # project_id is not given
+        # creates new project
+        if not body["project_id"]:
+            project_id = create_project(body)
 
-        if (project == None):
             return Response(
-                response= json.dumps({"message": f"The project {project_id} does not exist."}),
-                status= 404,
-                mimetype="application/json",
-            )
-
-        if (body["make_default"] == True):
-            dbResponse = db.users.update_one({"_id": CURR_USER_ID}, {"default_project": project_id})
-
-        dbResponse = db.projects.update_one({"_id": project_id}, body)
-
-        if (not dbResponse.matchedCount == 0 and not dbResponse.modifiedCount == 0):
-            return Response(
-                response= json.dumps({"message": "project saved/updated"}),
+                response= json.dumps({"message": "created and saved project", "project_id": project_id}),
                 status= 200,
                 mimetype="application/json",
             )
+
         else:
-            return Response(
-                response= json.dumps({"message": f"Unable to update project {project_id}"}),
-                status= 500,
-                mimetype="application/json",
-            )
+            project_id = body["project_id"]
+            project = db.projects.find_one({"_id": project_id})
+
+            if (project == None):
+                project_id = create_project(body)
+
+            if (body["make_default"] == True):
+                dbResponse = db.users.update_one({"_id": CURR_USER_ID}, {"default_project": project_id})
+
+            dbResponse = db.projects.update_one({"_id": project_id}, body)
+
+            if (not dbResponse.matchedCount == 0 and not dbResponse.modifiedCount == 0):
+                return Response(
+                    response= json.dumps({"message": "project saved/updated"}),
+                    status= 200,
+                    mimetype="application/json",
+                )
+            else:
+                return Response(
+                    response= json.dumps({"message": f"Unable to update project {project_id}"}),
+                    status= 500,
+                    mimetype="application/json",
+                )
     except Exception as ex:
         print("********")
         print(ex)
@@ -208,32 +195,20 @@ def get_submission(project_id, submission_token):
         # find submission and save the test results
         data = submission.get_json()
         print(data)
-        data_samples = []
-        tests = {}
-        for k in data.keys():
-            stat = data[k]["stats"]
-            tests.append({
-                k: {
-                    "y_pred_ind" : stat["y_pred_ind"],
-                    "y_pred_ind_adv" : stat["y_pred_ind_adv"],
-                    "y_pred_val" : stat["y_pred_val"],
-                    "y_pred_val_adv" : stat["y_pred_val_adv"],
-                    "y_target" : stat["y_target"],
-                    "x_sim" : stat["x_sim"],
-                    "time" : stat["time"],
-                    "accuracy" : stat["accuracy"],
-                    "accuracy_adv" : stat["accuracy_adv"],
-                    "mean_similarity" : stat["mean_similarity"]
-                }
-            })
 
         instance = {
-            "data_samples": data_samples,
-            "test_stats": tests
+            "data_samples": data["data"],
+            "test_stats": data["results"]
         }
 
         dbResponse= db.submissions.find_one_and_update({"token": submission_token}, {instance})
-        print(dbResponse.inserted_id)
+        if (dbResponse.matchedCount <= 0 and dbResponse.modifiedCount <= 0):
+                return Response(
+                    response= json.dumps({"message": f"Unable to save results for submission {submission_token}"}),
+                    status= 500,
+                    mimetype="application/json",
+                )
+
         submission = db.submissions.find_one({"token": submission_token})
 
         return Response(
