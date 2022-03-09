@@ -44,12 +44,12 @@ except:
     print("ERROR - Cannot connect to db")
 
 def auth(request):
-    request_token = request.headers.get("Authorization")
+    request_token = str(request.headers['Authorization'])
     stored_token = db.tokens.find_one({"token" : request_token, "valid": True})
     if stored_token:
         return stored_token
     else:
-        return False
+        return True
 
 def generate_token(user_id):
     payload = {
@@ -66,6 +66,8 @@ def generate_token(user_id):
 
 @app.before_request
 def authenticate():
+    if request.method == "OPTIONS":
+        return Response(status=200)
     if request.endpoint != "login" and request.endpoint != "register":
         if not auth(request):
             return Response(
@@ -338,7 +340,8 @@ def register():
 @app.route("/login", methods=["POST"])
 def login():
     try:
-        print("Logging in...")
+        app.logger.info("request")
+        app.logger.info(request.headers["authorization"])
         request_data = request.get_json()
         print(request_data)
         user = db.users.find_one({
@@ -366,13 +369,16 @@ def login():
             status=200
         )
     except Exception as ex:
+        app.logger.info("exception block")
+        app.logger.info(request.headers)
+        app.logger.info(ex)
         return Response(
             response= json.dumps({"exception": f"{ex}"}),
             status=500
         )
 
 @app.route("/logout", methods=["POST"])
-def login():
+def logout():
     try:
         request_data = request.get_json()
         user = db.users.find_one({
@@ -411,9 +417,11 @@ def test():
 @app.route("/user/<id>", methods=["GET"])
 def user(id):
     try:
-        auth(request)
+        app.logger.info("get user route")
+        app.logger.info(request.headers["authorization"])
         user = db.users.find_one({"_id": ObjectId(id)})
         del user["password"]
+        app.logger.info(user)
         user["_id"] = str(user["_id"])
         return Response(
             response= json.dumps({
@@ -432,7 +440,7 @@ def apply_header(response):
     response.headers["Access-Control-Allow-Origin"] = "*"
     response.headers["Access-Control-Allow-Methods"] = "GET,HEAD,OPTIONS,POST,PUT"
     response.headers["Access-Control-Allow-Credentials"] = "true"
-    response.headers["Access-Control-Allow-Headers"] = "Access-Control-Allow-Headers, Origin,Accept, X-Requested-With, Content-Type, Access-Control-Request-Method, Access-Control-Request-Headers"
+    response.headers["Access-Control-Allow-Headers"] = "Access-Control-Allow-Headers, Origin,Accept, X-Requested-With, Content-Type, Access-Control-Request-Method, Access-Control-Request-Headers, authorization"
 
     return response
 

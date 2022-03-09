@@ -17,7 +17,7 @@ function login(event) {
   $.ajax({
     url: 'http://127.0.0.1:6969/login',
     type: 'POST',
-    async: true,
+    async: false,
     contentType: 'application/json',
     data: JSON.stringify({
       user: document.getElementById('email').value,
