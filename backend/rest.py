@@ -28,15 +28,15 @@ wait = False
 CURR_USER_ID = ""
 
 try:
-    # mongo = pymongo.MongoClient(
-    #     "mongodb+srv://martin:DeepPen@cluster0.ldso5.mongodb.net/DeepPen?retryWrites=true&w=majority"
-    # )
     mongo = pymongo.MongoClient(
-        host = [ str("mongodb") + ":" + str(27017) ],
-        serverSelectionTimeoutMS = 3000, # 3 second timeout
-        username = "root",
-        password = "DeepPenetration",
+        "mongodb+srv://martin:DeepPen@cluster0.ldso5.mongodb.net/DeepPen?retryWrites=true&w=majority"
     )
+    # mongo = pymongo.MongoClient(
+    #     host = [ str("mongodb") + ":" + str(27017) ],
+    #     serverSelectionTimeoutMS = 3000, # 3 second timeout
+    #     username = "root",
+    #     password = "DeepPenetration",
+    # )
     db = mongo.db
     mongo.server_info()
     print("Successfully connected to db")
@@ -362,6 +362,34 @@ def login():
             response= json.dumps({
                 "user": json.dumps(user),
                 "token": user_token
+            }),
+            status=200
+        )
+    except Exception as ex:
+        return Response(
+            response= json.dumps({"exception": f"{ex}"}),
+            status=500
+        )
+
+@app.route("/logout", methods=["POST"])
+def login():
+    try:
+        request_data = request.get_json()
+        user = db.users.find_one({
+            "username": request_data['user']
+        })
+
+        user["_id"] = str(user["_id"])
+        if not bcrypt.checkpw(request_data["password"].encode('utf-8'), user["password"]):
+            return Response(
+                status=401
+            )
+
+        db.tokens.update_many({"user" : ObjectId(user["_id"])}, {"$set": {"valid": False}})
+
+        return Response(
+            response= json.dumps({
+                "message": "Successfully logged out",
             }),
             status=200
         )
