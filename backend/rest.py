@@ -28,15 +28,15 @@ wait = False
 CURR_USER_ID = ""
 
 try:
+#     mongo = pymongo.MongoClient(
+#         "mongodb+srv://martin:DeepPen@cluster0.ldso5.mongodb.net/DeepPen?retryWrites=true&w=majority"
+#     )
     mongo = pymongo.MongoClient(
-        "mongodb+srv://martin:DeepPen@cluster0.ldso5.mongodb.net/DeepPen?retryWrites=true&w=majority"
+        host = [ str("mongodb") + ":" + str(27017) ],
+        serverSelectionTimeoutMS = 3000, # 3 second timeout
+        username = "root",
+        password = "DeepPenetration",
     )
-    # mongo = pymongo.MongoClient(
-    #     host = [ str("mongodb") + ":" + str(27017) ],
-    #     serverSelectionTimeoutMS = 3000, # 3 second timeout
-    #     username = "root",
-    #     password = "DeepPenetration",
-    # )
     db = mongo.db
     mongo.server_info()
     print("Successfully connected to db")
