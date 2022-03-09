@@ -340,10 +340,7 @@ def register():
 @app.route("/login", methods=["POST"])
 def login():
     try:
-        app.logger.info("request")
-        app.logger.info(request.headers["authorization"])
         request_data = request.get_json()
-        print(request_data)
         user = db.users.find_one({
             "username": request_data['user']
         })
@@ -369,8 +366,6 @@ def login():
             status=200
         )
     except Exception as ex:
-        app.logger.info("exception block")
-        app.logger.info(request.headers)
         app.logger.info(ex)
         return Response(
             response= json.dumps({"exception": f"{ex}"}),
