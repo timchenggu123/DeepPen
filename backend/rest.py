@@ -46,16 +46,8 @@ except:
     print("ERROR - Cannot connect to db")
 
 def auth(request):
-<<<<<<< Updated upstream
     request_token = str(request.headers['Authorization'])
     stored_token = db.tokens.find_one({"token" : request_token, "valid": True})
-=======
-    args = request.args
-    bearer = args.get('bearer')
-    app.logger.info(f"print: {args}")
-
-    stored_token = db.tokens.find_one({"token" : bearer, "valid": True})
->>>>>>> Stashed changes
     if stored_token:
         return stored_token
     else:
@@ -352,11 +344,8 @@ def register():
 @app.route("/login", methods=["POST"])
 def login():
     try:
-<<<<<<< Updated upstream
         app.logger.info("request")
         app.logger.info(request.headers["authorization"])
-=======
->>>>>>> Stashed changes
         request_data = request.get_json()
         user = db.users.find_one({
             "username": request_data['user']
@@ -456,11 +445,7 @@ def apply_header(response):
     response.headers["Access-Control-Allow-Origin"] = "*"
     response.headers["Access-Control-Allow-Methods"] = "GET,HEAD,OPTIONS,POST,PUT"
     response.headers["Access-Control-Allow-Credentials"] = "true"
-<<<<<<< Updated upstream
     response.headers["Access-Control-Allow-Headers"] = "Access-Control-Allow-Headers, Origin,Accept, X-Requested-With, Content-Type, Access-Control-Request-Method, Access-Control-Request-Headers, authorization"
-=======
-    response.headers["Access-Control-Allow-Headers"] = "Access-Control-Allow-Headers, Origin,Accept, X-Requested-With, Content-Type, Access-Control-Request-Method, Access-Control-Request-Headers, Authorization"
->>>>>>> Stashed changes
 
     return response
 
