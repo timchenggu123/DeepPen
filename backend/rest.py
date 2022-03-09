@@ -80,7 +80,7 @@ def authenticate():
 @cross_origin(supports_credentials=True)
 def get_all_projects():
     try:
-        projects = db.projects.find({"user_id": CURR_USER_ID})
+        projects = db.projects.find({"user_id": jwt.decode(request.headers["authorization"])["sub"]})
 
         return Response(
             response= json.dumps({"projects" : projects}),
