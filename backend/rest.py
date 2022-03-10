@@ -87,7 +87,7 @@ def authenticate():
 @cross_origin()
 def get_all_projects():
     try:
-        projects = db.projects.find({"user_id": jwt.decode(request.headers["authorization"], "DeepPenetration", algorithms=["HS256"])["sub"]})
+        projects = db.projects.find({"user_id": jwt.decode(request.headers["authorization"])["sub"]})
 
         return Response(
             response= dumps(projects),
@@ -493,8 +493,6 @@ def login():
             status=200
         )
     except Exception as ex:
-        app.logger.info("exception block")
-        app.logger.info(request.headers)
         app.logger.info(ex)
         return Response(
             response= json.dumps({"exception": f"{str(ex)}"}),
