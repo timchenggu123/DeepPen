@@ -418,18 +418,23 @@ function run() {
         redirect_stderr_to_stdout: redirectStderrToStdout
     };
 
-    // Need to populate project_id
-    var project_id = "";
-
     var sendRequest = function(data) {
+
         timeStart = performance.now();
+
+        let url = apiUrl + `/projects/submissions`;
+
+        if (projectID != undefined){
+            url = apiUrl + `/projects/${projectID}/submissions?base64_encoded=true&wait=${wait}`;
+        }
+
         $.ajax({
-            url: apiUrl + `/submissions?base64_encoded=true&wait=${wait}`,
-            //url: apiUrl + `/projects/${project_id}/submissions?base64_encoded=true&wait=${wait}`,
+            url: url,
             type: "POST",
             async: true,
             contentType: "application/json",
             data: JSON.stringify(data),
+            headers: { 'Authorization': getCookie('token') },
             xhrFields: {
                 withCredentials: apiUrl.indexOf("/secure") != -1 ? true : false
             },
@@ -463,7 +468,6 @@ function run() {
     }else{
         sendRequest(data);
     }
-
 }
 
 function fetchSubmission(submission_token) {
@@ -471,6 +475,7 @@ function fetchSubmission(submission_token) {
         url: apiUrl + "/submissions/" + submission_token + "?base64_encoded=true",
         type: "GET",
         async: true,
+        headers: { 'Authorization': getCookie('token') },
         success: function (data, textStatus, jqXHR) {
             if (data.status.id <= 2) { // In Queue or Processing
                 setTimeout(fetchSubmission.bind(null, submission_token), check_timeout);
@@ -579,13 +584,15 @@ function fileUploadHandler(fileInput){
       alert(message);
 }
 
-function getProjects(){
-    $.ajax({
-        url:  "http://127.0.0.1:6969" + `/projects?bearer=${getCookie('token')}`,
+async function getProjects(){
+    return $.ajax({
+        url:  apiUrl + `/projects`,
         type: "GET",
         async: true,
+        headers: { 'Authorization': getCookie('token') },
         success: function (data, textStatus, jqXHR) {
             console.log(data);
+            return data;
         },
         error: handleRunError
     });
@@ -596,11 +603,12 @@ function saveOrAddProject(){
     let data = getProjectFields();
 
     $.ajax({
-        url: "http://127.0.0.1:6969" + `/projects`,
+        url: apiUrl + `/projects`,
         type: "POST",
         async: true,
         contentType: "application/json",
         data: JSON.stringify(data),
+        headers: { 'Authorization': getCookie('token') },
         xhrFields: {
             withCredentials: apiUrl.indexOf("/secure") != -1 ? true : false
         },
@@ -673,20 +681,75 @@ function getProjectFields(){
         command_line_arguments: commandLineArguments,
         redirect_stderr_to_stdout: redirectStderrToStdout
     };
-
     return data;
 }
 
+async function getProject(projectId){
+    return $.ajax({
+        url:  apiUrl + `/projects/` + projectId,
+        type: "GET",
+        async: true,
+        headers: { 'Authorization': getCookie('token') },
+        success: function (data, textStatus, jqXHR) {
+            sourceEditor.setValue(decode(data[0]["source_code"]));
+            $selectLanguage.dropdown("set selected", data[0]["language_id"]);
+            $compilerOptions.val(data[0]["compiler_options"]);
+            $commandLineArguments.val(data[0]["command_line_arguments"]);
+            stdinEditor.setValue(decode(data["stdin"]));
+            stdoutEditor.setValue(decode(data[0]["stdout"]));
+            stderrEditor.setValue(decode(data[0]["stderr"]));
+            compileOutputEditor.setValue(decode(data["compile_output"]));
+            sandboxMessageEditor.setValue(decode(data[0]["message"]));
+            var time = (data.time === null ? "-" : data.time + "s");
+            var memory = (data.memory === null ? "-" : data.memory + "KB");
+            $statusLine.html(`${data.status.description}, ${time}, ${memory}`);
+            return data;
+        },
+    });
+}
+
+async function deleteProject(projectId){
+    return $.ajax({
+        url:  apiUrl + `/projects/` + projectId,
+        type: "DELETE",
+        async: true,
+        headers: { 'Authorization': getCookie('token') },
+        success: function (data, textStatus, jqXHR) {
+            location.reload();
+            return data;
+        },
+    });
+}
+
+function GetURLParameter(sParam)
+{
+    var sPageURL = window.location.search.substring(1);
+    var sURLVariables = sPageURL.split('&');
+    for (var i = 0; i < sURLVariables.length; i++) 
+    {
+        var sParameterName = sURLVariables[i].split('=');
+        if (sParameterName[0] == sParam) 
+        {
+            return sParameterName[1];
+        }
+    }
+}
+
+
 $(window).resize(function() {
-    layout.updateSize();
-    updateScreenElements();
+    if (layout != undefined){
+        layout.updateSize();
+        updateScreenElements();
+    }
     // showMessages();
 });
 
-$(document).ready(function () {
-    updateScreenElements();
 
-    console.log("Hey, Judge0 IDE is open-sourced: https://github.com/judge0/ide. Have fun!");
+$(document).ready(async function () {
+
+    updateScreenElements(projectID);
+
+    projectID = GetURLParameter('projectId');
 
     $selectLanguage = $("#select-language");
     $selectLanguage.change(function (e) {
@@ -914,8 +977,13 @@ $(document).ready(function () {
         });
 
         layout.init();
+
+        if (projectID != undefined){
+            getProject(projectID);
+        }
     });
 });
+
 // Template Sources
 
 var TorchSource = "\

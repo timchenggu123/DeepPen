@@ -2,7 +2,7 @@ from cgitb import reset
 from cmath import e
 from distutils.log import debug
 from email import header
-from flask import Flask, Response, request, session
+from flask import Flask, Response, request
 from flask_cors import CORS, cross_origin
 import pymongo
 import json
@@ -24,8 +24,9 @@ class ProjectType(int, Enum):
 app = Flask(__name__)
 CORS(app, support_credentials=True)
 app.config['CORS_HEADERS'] = 'Content-Type'
+app.secret_key = 'HERE_IS_A_KEY'
 
-sandboxUrl = "sandbox:2358"
+sandboxUrl = str("http://sandbox") + ":" + str(2358)
 wait = False
 CURR_USER_ID = ""
 
@@ -45,13 +46,16 @@ try:
 except:
     print("ERROR - Cannot connect to db")
 
+
 def auth(request):
     request_token = str(request.headers['Authorization'])
     stored_token = db.tokens.find_one({"token" : request_token, "valid": True})
+
     if stored_token:
         return stored_token
     else:
         return True
+
 
 def generate_token(user_id):
     payload = {
@@ -76,16 +80,12 @@ def authenticate():
                 status=401
             )
 
-################################# PROJECTS
+################################# PROJECTS #################################
 @app.route("/projects", methods=["GET"])
 @cross_origin()
 def get_all_projects():
     try:
-        projects = db.projects.find({"user_id": CURR_USER_ID})
-        for p in projects:
-            app.logger.info(f"p: {p}")
-
-        app.logger.info(f"USER: {CURR_USER_ID}")
+        projects = db.projects.find({"user_id": jwt.decode(request.headers["authorization"], "DeepPenetration", algorithms=["HS256"])["sub"]})
 
         return Response(
             response= dumps(projects),
@@ -103,14 +103,37 @@ def get_all_projects():
         )
 
 
-@app.route("/projects/<project_id>", methods=["GET"])
-@cross_origin(supports_credentials=True)
-def get_project_by_id(project_id):
+@app.route("/projects/<project_id>", methods=["DELETE"])
+@cross_origin()
+def delete_by_project_id(project_id):
     try:
-        projects = db.projects.find({"_id": project_id})
+        app.logger.info(f"delete: {project_id}")
+        db.projects.delete_one({"_id": ObjectId(project_id)})
 
         return Response(
-            response= json.dumps({"projects" : projects}),
+            response= "Resource Deleted Succesfully",
+            status= 204,
+            mimetype="application/json",
+        )
+    except Exception as ex:
+        print("********")
+        print(ex)
+
+        return Response(
+            response= json.dumps({"message": "Unable to delete project", "ex": ex.message}),
+            status= 500,
+            mimetype="application/json",
+        )
+
+
+@app.route("/projects/<project_id>", methods=["GET"])
+@cross_origin()
+def get_project_by_id(project_id):
+    try:
+        project = db.projects.find({"_id": ObjectId(project_id)})
+
+        return Response(
+            response= dumps(project),
             status= 200,
             mimetype="application/json",
         )
@@ -149,6 +172,7 @@ def save_project():
         # project_id is not given
         # creates new project
         if "project_id" not in body:
+            body["user_id"] = jwt.decode(request.headers["authorization"], "DeepPenetration", algorithms=["HS256"])["sub"]
             project_id = create_project(body)
             return Response(
                 response= json.dumps({"message": "created and saved project", "project_id": str(project_id)}),
@@ -158,13 +182,15 @@ def save_project():
 
         else:
             project_id = body["project_id"]
+            body["user_id"] = jwt.decode(request.headers["authorization"], "DeepPenetration", algorithms=["HS256"])
+            
             project = db.projects.find_one({"_id": project_id})
 
             if (project == None):
                 project_id = create_project(body)
 
-            if (body["make_default"] == True):
-                dbResponse = db.users.update_one({"_id": CURR_USER_ID}, {"default_project": project_id})
+            # if (body["make_default"] == True):
+            #     dbResponse = db.projects.update_one({"user_id": jwt.decode(request.headers["authorization"], "DeepPenetration", algorithms=["HS256"])}, {"default_project": project_id})
 
             dbResponse = db.projects.update_one({"_id": project_id}, body)
 
@@ -191,37 +217,37 @@ def save_project():
         )
 
 ################################# SUBMISSIONS
-@app.route("/projects/<project_id>/submissions/<submission_token>", methods=["GET"])
+@app.route("/submissions/<submission_token>", methods=["GET"])
 @cross_origin(supports_credentials=True)
-def get_submission(project_id, submission_token):
+def get_submission(submission_token):
     try:
         url = sandboxUrl + f"/submissions/{submission_token}/?base64_encoded=true"
         submission = requests.get(url)
 
         # find submission and save the test results
-        data = submission.get_json()
-        print(data)
+    
+        data = submission.json()
+        app.logger.info(f"submission: {data}")
 
-        instance = {
-            "data_samples": data["data"],
-            "test_stats": data["results"]
-        }
+        newvalue = {"$set": data}
+        dbResponse = db.submissions.find_one_and_update({"token": submission_token}, newvalue)
+        app.logger.info(f"dbResponse: {dbResponse}")
 
-        dbResponse= db.submissions.find_one_and_update({"token": submission_token}, {instance})
-        if (dbResponse.matchedCount <= 0 and dbResponse.modifiedCount <= 0):
-                return Response(
-                    response= json.dumps({"message": f"Unable to save results for submission {submission_token}"}),
-                    status= 500,
-                    mimetype="application/json",
-                )
+        # if (dbResponse.matchedCount <= 0 and dbResponse.modifiedCount <= 0):
+        #         return Response(
+        #             response= json.dumps({"message": f"Unable to save results for submission {submission_token}"}),
+        #             status= 500,
+        #             mimetype="application/json",
+        #         )
 
         submission = db.submissions.find_one({"token": submission_token})
 
         return Response(
-            response= json.dumps({submission}),
+            response= dumps(submission),
             status= 200,
             mimetype="application/json",
         )
+
     except Exception as ex:
         print("********")
         print(ex)
@@ -258,16 +284,20 @@ def get_all_project_submissions(project_id):
             mimetype="application/json",
         )
 
-
-@app.route("/projects/<project_id>/submissions", methods=["POST"])
+@app.route("/projects/submissions", methods=["POST"])
 @cross_origin(supports_credentials=True)
-def handle_submission(project_id):
+def handle_submission_no_project_id():
     try:
         args = request.args
         body = request.get_json()
 
-        url = sandboxUrl + f"/submissions?base64_encoded=true&wait={args['wait']}"
-        submission = requests.post(url, data=body)
+        body["user_id"] = jwt.decode(request.headers["authorization"], "DeepPenetration", algorithms=["HS256"])["sub"]
+        project_id = create_project(body)
+
+        url = sandboxUrl + f"/submissions?base64_encoded=true&wait=true"
+        session = requests.Session()
+        session.trust_env = False
+        submission = session.post(url, json=body)
 
         res = submission.json()
         token = res["token"]
@@ -279,7 +309,6 @@ def handle_submission(project_id):
         }
 
         dbResponse= db.submissions.insert_one(instance)
-        print(dbResponse.inserted_id)
 
         # Find project and save the submission id
         project = db.projects.find_one({"_id": project_id})
@@ -293,15 +322,70 @@ def handle_submission(project_id):
 
         updated_submission_ids = project["submission_ids"].copy()
         updated_submission_ids.append(dbResponse.inserted_id)
+
         d = datetime.datetime.utcnow()
 
+        newvalues = { "$set": { "submission_ids": updated_submission_ids, "updated_at": d }}
+
         dbResponse = db.project.update_one(
-            {"_id" : project["_id"]},
-            {
-                "submission_ids":updated_submission_ids,
-                "updated_at": d
-            })
-        print(dbResponse.inserted_id)
+            {"_id" : project["_id"]}, newvalues)
+        
+        #print(dbResponse.inserted_id)
+
+        return Response(
+            response= json.dumps({"token" : token}),
+            status= 200,
+            mimetype="application/json",
+        )
+    except Exception as ex:
+        print("********")
+        print(ex)
+
+        return Response(
+            response= json.dumps({"message": "Unable to submit submission", "ex": ex.message}),
+            status= 500,
+            mimetype="application/json",
+        )
+
+
+@app.route("/projects/<project_id>/submissions", methods=["POST"])
+@cross_origin(supports_credentials=True)
+def handle_submission(project_id):
+    try:
+        args = request.args
+        body = request.get_json()
+
+        # Find project and save the submission id
+        project = db.projects.find_one({"_id": ObjectId(project_id)})
+
+        if (project == None):
+            return Response(
+                response= json.dumps({"message": f"Unable to find project {project_id}"}),
+                status= 500,
+                mimetype="application/json",
+            )
+
+        url = sandboxUrl + f"/submissions?base64_encoded=true&wait={args['wait']}"
+        submission = requests.post(url, data=body)
+        res = submission.json()
+        token = res["token"]
+
+        instance = {
+            "project_id" : project_id,
+            "token": token,
+            "params": body,
+        }
+
+        dbResponse= db.submissions.insert_one(instance)
+
+        updated_submission_ids = project["submission_ids"].copy()
+        updated_submission_ids.append(dbResponse.inserted_id)
+        d = datetime.datetime.utcnow()
+
+        newvalues = { "$set": { "submission_ids": updated_submission_ids, "updated_at": d }}
+
+        dbResponse = db.project.update_one(
+            {"_id" : project["_id"]}, newvalues)
 
         return Response(
             response= json.dumps({"token" : token}),
@@ -344,13 +428,11 @@ def register():
 @app.route("/login", methods=["POST"])
 def login():
     try:
-        app.logger.info("request")
-        app.logger.info(request.headers["authorization"])
         request_data = request.get_json()
         user = db.users.find_one({
             "username": request_data['user']
         })
-
+        
         user["_id"] = str(user["_id"])
         if not bcrypt.checkpw(request_data["password"].encode('utf-8'), user["password"]):
             return Response(
@@ -361,10 +443,6 @@ def login():
         user_token = generate_token(user["_id"])
         db.tokens.update_many({"user" : ObjectId(user["_id"])}, {"$set": {"valid": False}})
         db.tokens.insert_one({"user": ObjectId(user["_id"]), "token": user_token, "valid": True})
-
-        CURR_USER_ID = user["_id"]
-        app.logger.info(f"USER___IDDD: {CURR_USER_ID}")
-
 
         return Response(
             response= json.dumps({
@@ -378,7 +456,7 @@ def login():
         app.logger.info(request.headers)
         app.logger.info(ex)
         return Response(
-            response= json.dumps({"exception": f"{ex}"}),
+            response= json.dumps({"exception": f"{str(ex)}"}),
             status=500
         )
 
@@ -443,7 +521,7 @@ def user(id):
 @app.after_request
 def apply_header(response):
     response.headers["Access-Control-Allow-Origin"] = "*"
-    response.headers["Access-Control-Allow-Methods"] = "GET,HEAD,OPTIONS,POST,PUT"
+    response.headers["Access-Control-Allow-Methods"] = "GET,HEAD,OPTIONS,POST,PUT,DELETE "
     response.headers["Access-Control-Allow-Credentials"] = "true"
     response.headers["Access-Control-Allow-Headers"] = "Access-Control-Allow-Headers, Origin,Accept, X-Requested-With, Content-Type, Access-Control-Request-Method, Access-Control-Request-Headers, authorization"
 
