@@ -276,17 +276,11 @@ function createAdvTable(data){
     $('table').tablesort()
 }
 
-function createProjectsTable(){
+async function createProjectsTable(){
 
-    let project = getProjects();
-
-    let projects = [{ id:1, name: 'test', type: 'type1', user_id: 1234, created_at: '2022-02-02', updated_at: '2022-02-03' },
-    { id:2, name: 'test', type: 'type2', user_id: 1234, created_at: '2022-02-02', updated_at: '2022-02-03' }, 
-    { id:1, name: 'test', type: 'type1', user_id: 1234, created_at: '2022-02-02', updated_at: '2022-02-03' }, 
-    { id:3, name: 'test', type: 'type1', user_id: 1234, created_at: '2022-02-02', updated_at: '2022-02-03' }];
+    let projects = await getProjects();
 
     const container = document.getElementById("projects-table-container");
-    //while(container.firstChild) container.removeChild(container.firstChild)
 
     let table = document.createElement("table");
     table.className="ui sortable celled table";
@@ -300,18 +294,21 @@ function createProjectsTable(){
     let th3 = document.createElement("th");
     let th4 = document.createElement("th");
     let th5 = document.createElement("th");
+    let th6 = document.createElement("th");
     
     tr.append(th1);
     tr.append(th2);
     tr.append(th3);
     tr.append(th4);
-    tr.append(th5)
+    tr.append(th5);
+    tr.append(th6);
 
     th1.innerHTML = "No."
     th2.innerHTML = "Name";
     th3.innerHTML = "Type";
     th4.innerHTML = "Created At";
     th5.innerHTML = "Updated At";
+    th6.innerHTML = "";
 
     thead.append(tr);
     table.append(thead);
@@ -328,18 +325,31 @@ function createProjectsTable(){
         let td3 = document.createElement('td');
         let td4 = document.createElement('td');
         let td5 = document.createElement('td');
+        let td6 = document.createElement('td');
     
+        let link = document.createElement('a');
+        link.innerHTML = project.name;
+        link.setAttribute('href', `ide.html?projectId=${project._id.$oid}`);
+
+        let delAnchor = document.createElement('a');
+        delAnchor.setAttribute('onclick', `deleteProject("${project._id.$oid}")`);
+        let del = document.createElement('i');
+        del.setAttribute('class', `icon trash`);
+        delAnchor.appendChild(del);
+
         td1.innerHTML = num.toString();
-        td2.innerHTML = project.name;
+        td2.appendChild(link);
         td3.innerHTML = project.type;
-        td4.innerHTML = project.created_at;
-        td5.innerHTML = project.updated_at;
+        td4.innerHTML = project.created_at.$date;
+        td5.innerHTML = project.updated_at.$date;
+        td6.appendChild(delAnchor);
 
         row.appendChild(td1);
         row.appendChild(td2);
         row.appendChild(td3);
         row.appendChild(td4);
         row.appendChild(td5);
+        row.appendChild(td6);
     
         tbody.append(row);
         num += 1;
@@ -348,8 +358,4 @@ function createProjectsTable(){
     table.append(tbody);
     container.append(table);
     $('table').tablesort()
-}
-
-function saveProject(){
-
 }
