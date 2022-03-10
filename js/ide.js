@@ -1,4 +1,3 @@
-
 var defaultUrl = localStorageGetItem("api-url") || "http://127.0.0.1:2358";
 var apiUrl = defaultUrl;
 var wait = localStorageGetItem("wait") || false;
@@ -43,6 +42,8 @@ var messagesData;
 var additional_files;
 var submission_results;
 
+var projectID;
+
 var layoutConfig = {
     settings: {
         showPopoutIcon: false,
@@ -76,7 +77,7 @@ var layoutConfig = {
                         componentState: {
                             readOnly: true
                         }
-                    } 
+                    }
                 ]
             }, {
                 type: "stack",
@@ -88,7 +89,7 @@ var layoutConfig = {
                         componentState: {
                             readOnly: true
                         }
-                    }, 
+                    },
                     // {
                     //     type: "component",
                     //     componentName: "compile output",
@@ -331,11 +332,12 @@ function saveProject(){
 }
 
 function loadSavedSource() {
+    project_id = ""
     snippet_id = getIdFromURI();
 
     if (snippet_id.length == 36) {
         $.ajax({
-            url: apiUrl + "/submissions/" + snippet_id + "?fields=source_code,language_id,stdin,stdout,stderr,compile_output,message,time,memory,status,compiler_options,command_line_arguments&base64_encoded=true",
+            url: apiUrl + "/projects/" + project_id + "/submissions/" + snippet_id + "?fields=source_code,language_id,stdin,stdout,stderr,compile_output,message,time,memory,status,compiler_options,command_line_arguments&base64_encoded=true",
             type: "GET",
             success: function(data, textStatus, jqXHR) {
                 sourceEditor.setValue(decode(data["source_code"]));
@@ -386,7 +388,7 @@ function run() {
     data_configs={
         random: data_configs_random,
         n_test_data: data_configs_n_test_data,
-        indices: data_configs_indices 
+        indices: data_configs_indices
     }
     nn_configs=readNNConfigsTableData2Array('nn-configs-table')
     transfer_nn_configs=readNNConfigsTableData2Array('transfer-nn-configs-table')
@@ -395,7 +397,7 @@ function run() {
         transfer_nn_configs:JSON.stringify(transfer_nn_configs),
         data_configs:JSON.stringify(data_configs)
     }
-   
+
     var sourceValue = encode(sourceEditor.getValue());
     // var stdinValue = encode(stdinEditor.getValue());
     var stdinValue=encode(JSON.stringify(experiment_configs));
@@ -416,10 +418,14 @@ function run() {
         redirect_stderr_to_stdout: redirectStderrToStdout
     };
 
+    // Need to populate project_id
+    var project_id = "";
+
     var sendRequest = function(data) {
         timeStart = performance.now();
         $.ajax({
             url: apiUrl + `/submissions?base64_encoded=true&wait=${wait}`,
+            //url: apiUrl + `/projects/${project_id}/submissions?base64_encoded=true&wait=${wait}`,
             type: "POST",
             async: true,
             contentType: "application/json",
@@ -457,7 +463,7 @@ function run() {
     }else{
         sendRequest(data);
     }
-   
+
 }
 
 function fetchSubmission(submission_token) {
@@ -573,6 +579,104 @@ function fileUploadHandler(fileInput){
       alert(message);
 }
 
+function getProjects(){
+    $.ajax({
+        url:  "http://127.0.0.1:6969" + `/projects?bearer=${getCookie('token')}`,
+        type: "GET",
+        async: true,
+        success: function (data, textStatus, jqXHR) {
+            console.log(data);
+        },
+        error: handleRunError
+    });
+}
+
+function saveOrAddProject(){
+
+    let data = getProjectFields();
+
+    $.ajax({
+        url: "http://127.0.0.1:6969" + `/projects`,
+        type: "POST",
+        async: true,
+        contentType: "application/json",
+        data: JSON.stringify(data),
+        xhrFields: {
+            withCredentials: apiUrl.indexOf("/secure") != -1 ? true : false
+        },
+        success: function (data, textStatus, jqXHR) {
+            projectID = data.project_id;
+            console.log(`Your Project Id: ${data.project_id}`);
+        },
+        error: handleRunError
+    });
+}
+
+function getProjectFields(){
+    let name = document.getElementById("project-name").innerHTML;
+    let type = document.getElementById("select-language").value;
+
+    // if (sourceEditor.getValue().trim() === "") {
+    //     showError("Error", "Source code can't be empty!");
+    //     return;
+    // } else {
+    //     $runBtn.addClass("loading");
+    // }
+
+    document.getElementById("stdout-dot").hidden = true;
+    document.getElementById("stderr-dot").hidden = true;
+    // document.getElementById("compile-output-dot").hidden = true;
+    document.getElementById("sandbox-message-dot").hidden = true;
+
+    stdoutEditor.setValue("");
+    stderrEditor.setValue("");
+    // compileOutputEditor.setValue("");
+    sandboxMessageEditor.setValue("");
+
+    let data_configs_random=document.getElementById('data-configs-random').checked?1:0;
+    let data_configs_n_test_data = document.getElementById('data-configs-ndata').value;
+    let data_configs_indices = document.getElementById('data-configs-indices').value;
+
+    data_configs_n_test_data = data_configs_n_test_data?data_configs_n_test_data:0;
+    data_configs_indices = '['+data_configs_indices+']';
+    data_configs={
+        random: data_configs_random,
+        n_test_data: data_configs_n_test_data,
+        indices: data_configs_indices
+    }
+    nn_configs=readNNConfigsTableData2Array('nn-configs-table')
+    transfer_nn_configs=readNNConfigsTableData2Array('transfer-nn-configs-table')
+    let experiment_configs = {
+        nn_configs:JSON.stringify(nn_configs),
+        transfer_nn_configs:JSON.stringify(transfer_nn_configs),
+        data_configs:JSON.stringify(data_configs)
+    }
+
+    var sourceValue = encode(sourceEditor.getValue());
+    // var stdinValue = encode(stdinEditor.getValue());
+    var stdinValue=encode(JSON.stringify(experiment_configs));
+    var languageId = resolveLanguageId($selectLanguage.val());
+    var compilerOptions = $compilerOptions.val();
+    var commandLineArguments = $commandLineArguments.val();
+
+    if (parseInt(languageId) === 44) {
+        sourceValue = sourceEditor.getValue();
+    }
+
+    var data = {
+        name: name,
+        type: type,
+        source_code: sourceValue,
+        language_id: languageId,
+        stdin: stdinValue,
+        compiler_options: compilerOptions,
+        command_line_arguments: commandLineArguments,
+        redirect_stderr_to_stdout: redirectStderrToStdout
+    };
+
+    return data;
+}
+
 $(window).resize(function() {
     layout.updateSize();
     updateScreenElements();
@@ -611,7 +715,7 @@ $(document).ready(function () {
 
     $navigationMessage = $("#navigation-message span");
     $updates = $("#judge0-more");
-    
+
     $(`input[name="editor-mode"][value="${editorMode}"]`).prop("checked", true);
     $("input[name=\"editor-mode\"]").on("change", function(e) {
         editorMode = e.target.value;

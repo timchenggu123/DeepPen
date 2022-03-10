@@ -1,3 +1,5 @@
+const publicPages = ['http://localhost:8001/login.html', 'http://localhost:8001/register.html', 'http://localhost:8001/landing.html']
+
 function getCookie(name) {
   var v = document.cookie.match('(^|;) ?' + name + '=([^;]*)(;|$)');
   return v ? v[2] : null;
@@ -15,8 +17,7 @@ function deleteCookie(name) {
 
 window.addEventListener('load', function () {
   let token = getCookie('token');
-  // console.log(window.location);
-  // if (!token && window.location.href != 'http://localhost:8001/login.html') {
-  //   window.location.replace('http://localhost:8001/login.html');
-  // }
+  if (!token &&  !publicPages.includes(window.location.href)) {
+    window.location.replace('http://localhost:8001/login.html');
+  }
 });

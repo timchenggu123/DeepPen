@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+
+    <meta name="description" content="Free and open-source online code editor that allows you to write and execute code from a rich set of languages.">
+    <meta name="keywords" content="online editor, online code editor, online ide, online compiler, online interpreter, run code online, learn programming online,
+            online debugger, programming in browser, online code runner, online code execution, debug online, debug C code online, debug C++ code online,
+            programming online, snippet, snippets, code snippet, code snippets, pastebin, execute code, programming in browser, run c online, run C++ online,
+            run java online, run python online, run ruby online, run c# online, run rust online, run pascal online, run basic online">
+    <meta name="author" content="Herman Zvonimir Došilović">
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <meta property="og:title" content="Judge0 IDE - Free and open-source online code editor">
+    <meta property="og:description" content="Free and open-source online code editor that allows you to write and execute code from a rich set of languages.">
+    <meta property="og:image" content="https://raw.githubusercontent.com/judge0/ide/master/.github/wallpaper.png">
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js" integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/golden-layout/1.5.9/goldenlayout.min.js" integrity="sha256-NhJAZDfGgv4PiB+GVlSrPdh3uc75XXYSM4su8hgTchI=" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-annotation/1.3.1/chartjs-plugin-annotation.min.js" integrity="sha512-y7WpspnUHkKaewKb/dwPyBDJhigLAA9eH2rdvXGwZonWs/5NpSxKI6ZG2TWQVo+JY+tfNdgPgjcTGDhG/GMriA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    
+    <script>
+        Chart.register('chartjs-plugin-annotation');
+    </script>
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/golden-layout/1.5.9/css/goldenlayout-base.css" integrity="sha256-oIDR18yKFZtfjCJfDsJYpTBv1S9QmxYopeqw2dO96xM=" crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/golden-layout/1.5.9/css/goldenlayout-dark-theme.css" integrity="sha256-ygw8PvSDJJUGLf6Q9KIQsYR3mOmiQNlDaxMLDOx9xL0=" crossorigin="anonymous" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.7.1/jszip.min.js" integrity="sha512-xQBQYt9UcgblF6aCMrwU1NkVA7HCXaSN2oq0so80KO+y68M+n64FOcqgav4igHe6D5ObBLIf68DWv+gfBowczg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+
+    <script>
+        var require = {
+            paths: {
+                "vs": "https://unpkg.com/monaco-editor/min/vs",
+                "monaco-vim": "https://unpkg.com/monaco-vim/dist/monaco-vim",
+                "monaco-emacs": "https://unpkg.com/monaco-emacs/dist/monaco-emacs"
+            }
+        };
+    </script>
+    <script src="https://unpkg.com/monaco-editor/min/vs/loader.js"></script>
+    <script src="https://unpkg.com/monaco-editor@0.32.1/min/vs/editor/editor.main.nls.js"></script>
+    <script src="https://unpkg.com/monaco-editor@0.32.1/min/vs/editor/editor.main.js"></script>
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.4.1/semantic.min.css" integrity="sha256-9mbkOfVho3ZPXfM7W8sV2SndrGDuh7wuyLjtsWeTI1Q=" crossorigin="anonymous" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.4.1/semantic.min.js" integrity="sha256-t8GepnyPmw9t+foMh3mKNvcorqNHamSKtKRxxpUEgFI=" crossorigin="anonymous"></script>
+    
+    <link href="https://fonts.googleapis.com/css?family=Exo+2" rel="stylesheet">
+
+    <script type="text/javascript" src="third_party/download.js"></script>
+
+
+    <link type="text/css" rel="stylesheet" href="css/ide.css">
+
+    <title>Judge0 IDE - Free and open-source online code editor</title>
+    <link rel="shortcut icon" href="./favicon.ico" type="image/x-icon">
+    <link rel="icon" href="./favicon.ico" type="image/x-icon">
+</head>
+
+<body onload="createProjectsTable()">
+    <!-- sidebar -->
+    <div class="ui sidebar inverted vertical menu sidebar-menu" id="sidebar">
+        <div class="item">
+            <div class="header">General</div>
+            <div class="menu">
+            <a class="item">
+                <div>
+                <i class="icon tachometer alternate"></i>
+                Dashboard
+                </div>
+            </a>
+            </div>
+        </div>
+        <div class="item">
+            <div class="header">
+            Projects
+            </div>
+            <div class="menu">
+            <a class="item">
+                <div><i class="plus icon"></i>New</div>
+            </a>
+            <a class="item" href="">
+                <div><i class="folder icon"></i>All</div>
+            </a>
+        </div>
+    </div>
+
+    <a href="#" class="item">
+        <div>
+        <i class="icon chart line"></i>
+        Charts
+        </div>
+    </a>
+
+    <a class="item">
+        <div>
+        <i class="icon suitcase"></i>
+        Tools
+        </div>
+    </a>
+    <div class="item">
+        <div class="header">Other</div>
+        <div class="menu">
+        <a href="#" class="item">
+            <div>
+            <i class="icon envelope"></i>
+            Contact
+            </div>
+        </a>
+        </div>
+    </div>
+    <div class="ui segment inverted">
+        <div class="ui tiny olive inverted progress">
+        <div class="bar" style="width: 54%"></div>
+        <div class="label">Monthly Bandwidth</div>
+        </div>
+
+        <div class="ui tiny teal inverted progress">
+        <div class="bar" style="width:78%"></div>
+        <div class="label">Disk Usage</div>
+        </div>
+    </div>
+    </div>
+
+    <!-- sidebar -->
+    <!-- top nav -->
+
+    <nav class="ui top fixed inverted menu">
+    <div class="left menu">
+        <a href="#" class="sidebar-menu-toggler item" data-target="#sidebar">
+        <i class="sidebar icon"></i>
+        </a>
+        <a href="./ide.html" class="header item">
+        Deep Pen
+        </a>
+    </div>
+
+    <div class="right menu">
+        <a href="#" class="item">
+        <i class="bell icon"></i>
+        </a>
+        <div class="ui dropdown item">
+        <i class="user cirlce icon"></i>
+        <div class="menu">
+            <a href="#" class="item">
+            <i class="info circle icon"></i> Profile</a
+            >
+            <a href="#" class="item">
+            <i class="wrench icon"></i>
+            Settings</a
+            >
+            <a href="#" class="item">
+            <i class="sign-out icon"></i>
+            Logout
+            </a>
+        </div>
+        </div>
+    </div>
+    </nav>
+    <!-- top nav -->
+
+    <div class="main-content">
+        <div id="ide-segment" class="ui vertical segment">
+            <div class="project-content">
+                <div class="project-content-header">
+                    <span> Projects <i class="icon folder"></i></span>
+                </div>
+                <div class="thirteen wide column right floated">
+                    <div id="projects-table-container" class="ui container" style="overflow: hidden; float: left; padding-left: 2%;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</body>
+<script type="text/javascript" src="js/sortable.js"></script>
+<script type="text/javascript" src="js/table.js"></script>
+<script type="text/javascript" src="js/chart.js"></script>
+<script type="text/javascript" src="js/ide.js"></script>
+<script src="./js/dash.js"></script>
+<script type="text/javascript" src="js/authentication.js"></script>
+</html>
