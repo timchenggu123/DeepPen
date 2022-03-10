@@ -275,3 +275,4 @@ function createAdvTable(data){
     container.append(table);
     $('table').tablesort()
 }
+

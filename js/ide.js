@@ -41,6 +41,7 @@ var timeEnd;
 var messagesData;
 
 var additional_files;
+var submission_results;
 
 var layoutConfig = {
     settings: {
@@ -234,13 +235,11 @@ function handleResult(data) {
 
     $runBtn.removeClass("loading");
 
-    // console.log(compile_output);
     var resultsData = JSON.parse(compile_output);
-    console.log(resultsData.data.x)
+    submission_results = resultsData.results
     drawChart(resultsData.results);
     createResultsTable(resultsData.results);
     createAdvTable(resultsData);
-    // console.log(compile_output);
     document.getElementById("results").style.display = "block";
     document.getElementById("results").scrollIntoView(true);
 }
@@ -311,6 +310,25 @@ function setProjectName(){
     const val = prompt("Enter new project name", curr_name);
     project_name.innerText=val?val:curr_name;
 }
+
+function saveProject(){
+    const project_name = document.getElementById('project-name').innerText;
+    const type = document.getElementById("select-language").value
+    let projects = JSON.parse(localStorageGetItem("projects")) || []
+    projects.push([project_name, type]);
+    localStorageSetItem("projects", JSON.stringify(projects))
+
+    let project_data={}
+    keys = Object.keys(submission_results)
+    keys.forEach(key=>{
+        project_data[key] = {}
+        project_data[key].stats=submission_results[key].stats
+    })
+
+    localStorageSetItem("project_data?"+project_name, JSON.stringify(project_data))
+    alert("Saved Project:" + project_name)
+}
+
 function loadSavedSource() {
     snippet_id = getIdFromURI();
 
