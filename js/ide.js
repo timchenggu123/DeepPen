@@ -259,7 +259,10 @@ function downloadSource() {
 //Test Configuration Presets
 const nn_configs_preset = [['MNIST_FFNN', 2, 128],['MNIST_FFNN', 3, 256],['MNIST_FFNN', 4, 512],['MNIST_FFNN', 5, 1024]];
 const transfer_nn_configs_preset = [['MNIST_FFNN', 2, 128],['MNIST_FFNN', 3, 256],['MNIST_FFNN', 4, 512],['MNIST_FFNN', 5, 1024]];
-const data_configs_preset="100";
+const data_configs_preset={
+    n_test_data:"100",
+    indices: "1,2,3"
+};
 
 let nn_configs = JSON.parse(localStorageGetItem('nn_configs'))|| nn_configs_preset
 let transfer_nn_configs = JSON.parse(localStorageGetItem('transfer_nn_configs'))|| transfer_nn_configs_preset
@@ -283,9 +286,9 @@ function saveDataConfig(){
     localStorageSetItem('data_configs', JSON.stringify(data_configs))
 }
 
-function loadDataConfigs(){
-    document.getElementById('data-configs-ndata').value=data_configs.n_test_data;
-    document.getElementById('data-configs-indices').value=data_configs.indices;
+function loadDataConfigs(configs){
+    document.getElementById('data-configs-ndata').value=configs.n_test_data;
+    document.getElementById('data-configs-indices').value=configs.indices.replace("[","").replace("]","");
 }
 
 function addNNToTable(){
@@ -331,6 +334,13 @@ function saveProject(){
     alert("Saved Project:" + project_name)
 }
 
+function loadSavedConfigs(data){
+    data=JSON.parse(data)
+    console.log(data['nn_configs'])
+    createNNConfigsTable(JSON.parse(data['nn_configs']), "nn-configs-table");
+    createNNConfigsTable(JSON.parse(data['transfer_nn_configs']), "transfer-nn-configs-table");
+    loadDataConfigs(JSON.parse(data["data_configs"]));
+}
 function loadSavedSource() {
     project_id = ""
     snippet_id = getIdFromURI();
@@ -600,6 +610,20 @@ async function getProjects(){
     });
 }
 
+async function getDashboards(){
+    return $.ajax({
+        url:  apiUrl + `/dashboards`,
+        type: "GET",
+        async: true,
+        headers: { 'Authorization': getCookie('token') },
+        success: function (data, textStatus, jqXHR) {
+            console.log(data);
+            return data;
+        },
+        error: handleRunError
+    });
+}
+
 function saveOrAddProject(){
 
     let data = getProjectFields();
@@ -699,12 +723,25 @@ async function getProject(projectId){
             $selectLanguage.dropdown("set selected", data['project'][0]["language_id"]);
             $compilerOptions.val(data['project'][0]["compiler_options"]);
             $commandLineArguments.val(data['project'][0]["command_line_arguments"]);
-            //stdinEditor.setValue(decode(data['project'][0]["stdin"]));
+            loadSavedConfigs(decode(data['project'][0]["stdin"]))
             stdoutEditor.setValue(decode(data['project'][0]["stdout"]));
             stderrEditor.setValue(decode(data['project'][0]["stderr"]));
             //compileOutputEditor.setValue(decode(data['project'][0]["compile_output"]));
             sandboxMessageEditor.setValue(decode(data['project'][0]["message"]));
+            document.getElementById('project-name').innerText=data['project'][0]['name'];
+            console.log(data['project'][0]['name'])
             return data;
+        },
+    });
+}
+async function getProjectStats(projectId){
+    return $.ajax({
+        url:  apiUrl + `/projects_stats/` + projectId,
+        type: "GET",
+        async: true,
+        headers: { 'Authorization': getCookie('token') },
+        success: function (data, textStatus, jqXHR) {
+            console.log("data:", data);
         },
     });
 }
@@ -799,9 +836,6 @@ $(document).ready(async function () {
     });
 
     $statusLine = $("#status-line");
-    createNNConfigsTable(nn_configs, "nn-configs-table");
-    createNNConfigsTable(transfer_nn_configs, "transfer-nn-configs-table");
-    loadDataConfigs();
 
     $("body").keydown(function (e) {
         var keyCode = e.keyCode || e.which;
@@ -964,6 +998,9 @@ $(document).ready(async function () {
             getProject(projectID);
         }else{
             setProjectName();
+            createNNConfigsTable(nn_configs, "nn-configs-table");
+            createNNConfigsTable(transfer_nn_configs, "transfer-nn-configs-table");
+            loadDataConfigs(data_configs);  
         }
     });
 });

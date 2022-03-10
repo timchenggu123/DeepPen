@@ -1,3 +1,4 @@
+
 const randomNum = () => Math.floor(Math.random() * (235 - 52 + 1) + 52);
 const randomRGB = (alpha) => `rgb(${randomNum()}, ${randomNum()}, ${randomNum()}, ${alpha})`;
 var chartLayout;
@@ -50,6 +51,7 @@ var config = {
 
 
 function getSpeedChartData(data){
+    data=data["stats"]
     var x_labels = [];
     var ret = [];
     const keys = Object.keys(data);
@@ -68,6 +70,7 @@ function getSpeedChartData(data){
 }
 
 function getAccuracyDiffChartData(data){
+    data=data["stats"]
     var x_labels = [];
     var ret = [];
     const keys = Object.keys(data);
@@ -88,6 +91,7 @@ function getAccuracyDiffChartData(data){
 }
 
 function getSimilarityChartData(data){
+    data=data["stats"]
     var x_labels = [];
     var ret = [];
     const keys = Object.keys(data);
@@ -105,13 +109,50 @@ function getSimilarityChartData(data){
     }
 }
 
-function getProjects(){
-    
-    return JSON.parse(localStorageGetItem("projects")) || []
+var defaultUrl = localStorageGetItem("api-url") || "http://127.0.0.1:6969";
+var apiUrl = defaultUrl;
+
+function handleRunError(jqXHR, textStatus, errorThrown) {
+    console.log(jqXHR)
+}
+async function getProjects(){
+    return $.ajax({
+        url:  apiUrl + `/projects`,
+        type: "GET",
+        async: true,
+        headers: { 'Authorization': getCookie('token') },
+        success: function (data, textStatus, jqXHR) {
+            console.log(data);
+            return data;
+        },
+        error: handleRunError
+    });
+}
+async function getProjectStats(project_id){
+    return $.ajax({
+        url:  apiUrl + `/projects_stats/` + project_id,
+        type: "GET",
+        async: true,
+        headers: { 'Authorization': getCookie('token') },
+        success: function (data, textStatus, jqXHR) {
+            return data.stats;
+        },
+        error: handleRunError
+    });
+}
+async function listProjects(){
+    let projects = await getProjects();
+    let ret = []
+    projects.forEach(project=>{
+        ret.push([project._id.$oid,project.name, project.updated_at.$date])   
+    })
+    return ret
+    return
 }
 
-function getProjectData(project_name){
-    return JSON.parse(localStorageGetItem("project_data?"+project_name)) ||{}
+async function getProjectData(project_id){
+    // return JSON.parse(localStorageGetItem("project_data?"+project_name)) ||{}
+    return await getProjectStats(project_id);
 }
 
 const chartDatafunctions={
@@ -148,12 +189,13 @@ options: {
 const chartDatasetTemplates={
     0:{
         type: 'bar',
-        label: 'Transfered Drop in Accuracy',
+        label: 'Speed',
         backgroundColor: randomRGB(0.9),
         borderColor: randomRGB(0.2),
         borderWidth: 0
     },
     1:{
+        type: "line",
         label: 'Original - Adversarial Accuracy',
         fill: true,
         fillColor: randomRGB(0.9),
@@ -162,20 +204,20 @@ const chartDatasetTemplates={
     },
     2:{
         type: 'bar',
-        label: 'Transfered Drop in Accuracy',
+        label: 'Speed',
         backgroundColor: randomRGB(0.9),
         borderColor: randomRGB(0.2),
         borderWidth: 0
     },
 
 }
-function newChart(type, projects){
+async function newChart(type, projects){
     const func = chartDatafunctions[type];
     const project_data=[];
-    console.log(projects);
     for (let i =0; i < projects.length; i+=1){
-        project_data.push(func(getProjectData(projects[i][0])));
+        project_data.push(func(await getProjectData(projects[i][1])));
     }
+    console.log(project_data)
     let x_labels=[];
     project_data.forEach(data=>{
         x_labels=x_labels.concat(data.x_labels);
@@ -185,12 +227,12 @@ function newChart(type, projects){
     let d_template = chartDatasetTemplates[type]
     let datasets = [];
     for (let i=0; i < project_data.length; i+=1){
-        let dataset = d_template;
+        let dataset = JSON.parse(JSON.stringify(d_template));
         dataset.data=project_data[i].data;
         dataset.label=projects[i];
         datasets.push(dataset);
     }
-    
+
     let c_template=chartTemplate;
     c_template.data.datasets=datasets;
     c_template.label=x_labels;
@@ -204,9 +246,9 @@ function drawChart(data){
     return element;
 }
 
-function createProjectsTable(data, tableid){
+function createChartsProjectsTable(data, tableid){
     const container = document.getElementById(tableid);
-    let fields = ["Project Name", "Project Type"];
+    let fields = ["Project Name", "ID"];
     while(container.firstChild) container.removeChild(container.firstChild)
     let table = document.createElement("table");
     table.className="ui table";
@@ -255,10 +297,10 @@ function updateProjectsTable(data, tableid){
     let row = document.createElement("tr")
 
     let v1 = document.createElement("td");
-    v1.innerText=data[0];
+    v1.innerText=data[1];
 
     let v2 = document.createElement("td");
-    v2.innerText=data[1];
+    v2.innerText=data[0];
 
     let delButton=document.createElement("div");
     delButton.className="ui right floated icon button";
@@ -294,29 +336,29 @@ function addProjectToTable(){
     updateProjectsTable(data.split(","), 'projects-table')
 }
 
-function createNewChart(){
+async function createNewChart(){
     const type = document.getElementById("select-type").value
     const projects = readProjectsTableData2Array("projects-table")
+    const chart_data = await newChart(type, projects)
     let config = {
             title:"chart",
             componentName:"chart",
             type:'component',
             componentState: {
-                type: type,
-                projects:projects
+                chart_data:chart_data
             }
 
     }
     chartLayout.root.contentItems[ 0 ].addChild(config);
 }
 
-function createSelectProjects(){
+async function createSelectProjects(){
     const root = document.getElementById("select-projects")
-    const projects = getProjects()
+    const projects = await listProjects()
     projects.forEach(p=>{
        let op=document.createElement("option")
-       op.innerText=p[0];
-       op.value=p
+       op.value=p[0]+','+p[1] + ',' + p[2]
+       op.innerText=p[1];
        root.append(op);
     })
 }
@@ -334,14 +376,11 @@ $(document).ready(function () {
     });
 
     $('.tabular.menu .item').tab()
-
+    createChartsProjectsTable([],"projects-table")
     createSelectProjects();
-    createProjectsTable([],"projects-table")
-
     chartLayout = new window.GoldenLayout( config, $('#charts-container') );
-    chartLayout.registerComponent( 'chart', function( container, state ){
-        const chart_data = newChart(state.type, state.projects)
-        const chart = drawChart(chart_data);
+    chartLayout.registerComponent( 'chart', function ( container, state ){
+        const chart = drawChart(state.chart_data);
         container.getElement().append(chart)
         container.getElement().css('background-color', '#f5f5f5')
     });

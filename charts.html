@@ -21,7 +21,18 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/golden-layout/1.5.9/css/goldenlayout-base.css" integrity="sha256-oIDR18yKFZtfjCJfDsJYpTBv1S9QmxYopeqw2dO96xM=" crossorigin="anonymous" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/golden-layout/1.5.9/css/goldenlayout-dark-theme.css" integrity="sha256-ygw8PvSDJJUGLf6Q9KIQsYR3mOmiQNlDaxMLDOx9xL0=" crossorigin="anonymous" />
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.7.1/jszip.min.js" integrity="sha512-xQBQYt9UcgblF6aCMrwU1NkVA7HCXaSN2oq0so80KO+y68M+n64FOcqgav4igHe6D5ObBLIf68DWv+gfBowczg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-
+    <script>
+        var require = {
+            paths: {
+                "vs": "https://unpkg.com/monaco-editor/min/vs",
+                "monaco-vim": "https://unpkg.com/monaco-vim/dist/monaco-vim",
+                "monaco-emacs": "https://unpkg.com/monaco-emacs/dist/monaco-emacs"
+            }
+        };
+    </script>
+    <script src="https://unpkg.com/monaco-editor/min/vs/loader.js"></script>
+    <script src="https://unpkg.com/monaco-editor@0.32.1/min/vs/editor/editor.main.nls.js"></script>
+    <
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.4.1/semantic.min.css" integrity="sha256-9mbkOfVho3ZPXfM7W8sV2SndrGDuh7wuyLjtsWeTI1Q=" crossorigin="anonymous" />
     <script src="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.4.1/semantic.min.js" integrity="sha256-t8GepnyPmw9t+foMh3mKNvcorqNHamSKtKRxxpUEgFI=" crossorigin="anonymous"></script>
     
@@ -56,16 +67,16 @@
             Projects
             </div>
             <div class="menu">
-            <a class="item">
+            <a href="ide.html" class="item">
                 <div><i class="plus icon"></i>New</div>
             </a>
-            <a class="item">
+            <a href="project.html" class="item">
                 <div><i class="folder icon"></i>All</div>
             </a>
         </div>
     </div>
 
-    <a href="#" class="item">
+    <a href="./charts.html" class="item">
         <div>
         <i class="icon chart line"></i>
         Charts
@@ -170,7 +181,7 @@
                     <div class="six wide column">
                         <div class="field">
                             <label>Projects</label>
-                            <select id="select-projects" class="ui dropdown">
+                            <select id="select-projects" class="ui dropdown" onload="createSelectProjects()">
                             </select>
                         </div>
                         <div class="field">
@@ -195,4 +206,5 @@
 <script type="text/javascript" src="js/table.js"></script>
 <script type="text/javascript" src="js/charts.js"></script>
 <script src="./js/dash.js"></script>
+<script type="text/javascript" src="js/authentication.js"></script>
 </html>

@@ -14,6 +14,8 @@ from flask_bcrypt import Bcrypt,generate_password_hash, check_password_hash
 import bcrypt
 import datetime
 import jwt
+import base64
+
 from enum import Enum
 
 class ProjectType(int, Enum):
@@ -131,8 +133,11 @@ def delete_by_project_id(project_id):
 def get_project_by_id(project_id):
     try:
         project = db.projects.find({"_id": ObjectId(project_id)})
-        submission = db.submissions.find({"project_id": project_id}).sort("_id",-1)[0]
-
+        try:
+            submission = db.submissions.find({"project_id": project_id}).sort("_id",-1)[0]
+        except:
+            submission = db.submissions.find({"project_id": ObjectId(project_id)}).sort("_id",-1)[0]
+       
         resp = {'project': project, 'submission': submission}
 
         return Response(
@@ -150,6 +155,32 @@ def get_project_by_id(project_id):
             mimetype="application/json",
         )
 
+@app.route("/projects_stats/<project_id>", methods=["GET"])
+@cross_origin()
+def get_project_stats_by_id(project_id):
+    try:
+        project = db.projects.find({"_id": ObjectId(project_id)})
+        try:
+            submission = db.submissions.find({"project_id": project_id}).sort("_id",-1)[0]
+        except:
+            submission = db.submissions.find({"project_id": ObjectId(project_id)}).sort("_id",-1)[0]
+       
+        resp = {'project': project, 'stats': submission["stats"]}
+
+        return Response(
+            response= dumps(resp),
+            status= 200,
+            mimetype="application/json",
+        )
+    except Exception as ex:
+        print("********")
+        print(ex)
+
+        return Response(
+            response= json.dumps({"message": f"Unable to get project {project_id}", "ex": ex.message}),
+            status= 500,
+            mimetype="application/json",
+        )
 
 def create_project(body):
     d = datetime.datetime.utcnow()
@@ -230,7 +261,16 @@ def get_submission(submission_token):
         # find submission and save the test results
     
         data = submission.json()
-
+        output = data['compile_output']
+        if output:
+            output=base64.b64decode(output)
+            output =json.loads(output)
+            output=output['results']
+            stats={}
+            for i in output.items():
+                stats[i[0]] ={"stats":i[1]["stats"]}
+            data["stats"]=stats
+        
         newvalue = {"$set": data}
         dbResponse = db.submissions.find_one_and_update({"token": submission_token}, newvalue)
 
