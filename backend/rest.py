@@ -131,11 +131,9 @@ def delete_by_project_id(project_id):
 def get_project_by_id(project_id):
     try:
         project = db.projects.find({"_id": ObjectId(project_id)})
-        submission = db.submissions.find_one({"project_id": ObjectId(project_id)})
-        app.logger.info(f"submission: {dumps(submission)}")
+        submission = db.submissions.find({"project_id": project_id}).sort("_id",-1)[0]
 
         resp = {'project': project, 'submission': submission}
-        app.logger.info(f"submission: {dumps(submission)}")
 
         return Response(
             response= dumps(resp),
