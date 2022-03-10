@@ -236,6 +236,7 @@ function handleResult(data) {
     $runBtn.removeClass("loading");
 
     var resultsData = JSON.parse(compile_output);
+    console.log(resultsData)
     submission_results = resultsData.results
     drawChart(resultsData.results);
     createResultsTable(resultsData.results);

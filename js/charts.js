@@ -106,6 +106,7 @@ function getSimilarityChartData(data){
 }
 
 function getProjects(){
+    
     return JSON.parse(localStorageGetItem("projects")) || []
 }
 
@@ -320,6 +321,9 @@ function createSelectProjects(){
     })
 }
 
+function saveDashboard(){
+    return chartLayout.toConfig()
+}
 $(document).ready(function () {
     $("select.dropdown").dropdown();
     $(".ui.dropdown").dropdown();
