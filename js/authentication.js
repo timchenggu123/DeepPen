@@ -17,7 +17,6 @@ function deleteCookie(name) {
 
 window.addEventListener('load', function () {
   let token = getCookie('token');
-  console.log(window.location);
   if (!token &&  !publicPages.includes(window.location.href)) {
     window.location.replace('http://localhost:8001/login.html');
   }

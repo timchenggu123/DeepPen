@@ -26,7 +26,7 @@ function login(event) {
     success: function (data, textStatus, jqXHR) {
       let response = JSON.parse(data);
       setCookie('token', response.token);
-      window.location.replace('http://localhost:8001/ide.html');
+      window.location.replace('http://localhost:8001/projects.html');
     },
     error: function (data) {
       deleteCookie('token');

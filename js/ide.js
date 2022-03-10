@@ -1,4 +1,3 @@
-
 var defaultUrl = localStorageGetItem("api-url") || "http://127.0.0.1:2358";
 var apiUrl = defaultUrl;
 var wait = localStorageGetItem("wait") || false;
@@ -41,6 +40,9 @@ var timeEnd;
 var messagesData;
 
 var additional_files;
+var submission_results;
+
+var projectID;
 
 var layoutConfig = {
     settings: {
@@ -234,13 +236,12 @@ function handleResult(data) {
 
     $runBtn.removeClass("loading");
 
-    // console.log(compile_output);
     var resultsData = JSON.parse(compile_output);
-    console.log(resultsData.data.x)
+    console.log(resultsData)
+    submission_results = resultsData.results
     drawChart(resultsData.results);
     createResultsTable(resultsData.results);
     createAdvTable(resultsData);
-    // console.log(compile_output);
     document.getElementById("results").style.display = "block";
     document.getElementById("results").scrollIntoView(true);
 }
@@ -258,7 +259,10 @@ function downloadSource() {
 //Test Configuration Presets
 const nn_configs_preset = [['MNIST_FFNN', 2, 128],['MNIST_FFNN', 3, 256],['MNIST_FFNN', 4, 512],['MNIST_FFNN', 5, 1024]];
 const transfer_nn_configs_preset = [['MNIST_FFNN', 2, 128],['MNIST_FFNN', 3, 256],['MNIST_FFNN', 4, 512],['MNIST_FFNN', 5, 1024]];
-const data_configs_preset="100";
+const data_configs_preset={
+    n_test_data:"100",
+    indices: "1,2,3"
+};
 
 let nn_configs = JSON.parse(localStorageGetItem('nn_configs'))|| nn_configs_preset
 let transfer_nn_configs = JSON.parse(localStorageGetItem('transfer_nn_configs'))|| transfer_nn_configs_preset
@@ -282,9 +286,9 @@ function saveDataConfig(){
     localStorageSetItem('data_configs', JSON.stringify(data_configs))
 }
 
-function loadDataConfigs(){
-    document.getElementById('data-configs-ndata').value=data_configs.n_test_data;
-    document.getElementById('data-configs-indices').value=data_configs.indices;
+function loadDataConfigs(configs){
+    document.getElementById('data-configs-ndata').value=configs.n_test_data;
+    document.getElementById('data-configs-indices').value=configs.indices.replace("[","").replace("]","");
 }
 
 function addNNToTable(){
@@ -310,6 +314,32 @@ function setProjectName(){
     const curr_name= project_name.innerText;
     const val = prompt("Enter new project name", curr_name);
     project_name.innerText=val?val:curr_name;
+}
+
+function saveProject(){
+    const project_name = document.getElementById('project-name').innerText;
+    const type = document.getElementById("select-language").value
+    let projects = JSON.parse(localStorageGetItem("projects")) || []
+    projects.push([project_name, type]);
+    localStorageSetItem("projects", JSON.stringify(projects))
+
+    let project_data={}
+    keys = Object.keys(submission_results)
+    keys.forEach(key=>{
+        project_data[key] = {}
+        project_data[key].stats=submission_results[key].stats
+    })
+
+    localStorageSetItem("project_data?"+project_name, JSON.stringify(project_data))
+    alert("Saved Project:" + project_name)
+}
+
+function loadSavedConfigs(data){
+    data=JSON.parse(data)
+    console.log(data['nn_configs'])
+    createNNConfigsTable(JSON.parse(data['nn_configs']), "nn-configs-table");
+    createNNConfigsTable(JSON.parse(data['transfer_nn_configs']), "transfer-nn-configs-table");
+    loadDataConfigs(JSON.parse(data["data_configs"]));
 }
 function loadSavedSource() {
     project_id = ""
@@ -390,6 +420,8 @@ function run() {
     }
 
     var data = {
+        name : document.getElementById("project-name").innerHTML,
+        type : document.getElementById("select-language").value,
         source_code: sourceValue,
         language_id: languageId,
         stdin: stdinValue,
@@ -398,17 +430,23 @@ function run() {
         redirect_stderr_to_stdout: redirectStderrToStdout
     };
 
-    // Need to populate project_id
-    var project_id = "";
-
     var sendRequest = function(data) {
+
         timeStart = performance.now();
+
+        let url = apiUrl + `/projects/submissions`;
+
+        if (projectID != undefined){
+            url = apiUrl + `/projects/${projectID}/submissions?base64_encoded=true&wait=${wait}`;
+        }
+
         $.ajax({
-            url: apiUrl + `/projects/${project_id}/submissions?base64_encoded=true&wait=${wait}`,
+            url: url,
             type: "POST",
             async: true,
             contentType: "application/json",
             data: JSON.stringify(data),
+            headers: { 'Authorization': getCookie('token') },
             xhrFields: {
                 withCredentials: apiUrl.indexOf("/secure") != -1 ? true : false
             },
@@ -442,14 +480,14 @@ function run() {
     }else{
         sendRequest(data);
     }
-
 }
 
-function fetchSubmission(project_id, submission_token) {
+function fetchSubmission(submission_token) {
     $.ajax({
-        url: apiUrl + "/projects/" + project_id + "/submissions/" + submission_token + "?base64_encoded=true",
+        url: apiUrl + "/submissions/" + submission_token + "?base64_encoded=true",
         type: "GET",
         async: true,
+        headers: { 'Authorization': getCookie('token') },
         success: function (data, textStatus, jqXHR) {
             if (data.status.id <= 2) { // In Queue or Processing
                 setTimeout(fetchSubmission.bind(null, submission_token), check_timeout);
@@ -558,16 +596,200 @@ function fileUploadHandler(fileInput){
       alert(message);
 }
 
+async function getProjects(){
+    return $.ajax({
+        url:  apiUrl + `/projects`,
+        type: "GET",
+        async: true,
+        headers: { 'Authorization': getCookie('token') },
+        success: function (data, textStatus, jqXHR) {
+            console.log(data);
+            return data;
+        },
+        error: handleRunError
+    });
+}
+
+async function getDashboards(){
+    return $.ajax({
+        url:  apiUrl + `/dashboards`,
+        type: "GET",
+        async: true,
+        headers: { 'Authorization': getCookie('token') },
+        success: function (data, textStatus, jqXHR) {
+            console.log(data);
+            return data;
+        },
+        error: handleRunError
+    });
+}
+
+function saveOrAddProject(){
+
+    let data = getProjectFields();
+
+    $.ajax({
+        url: apiUrl + `/projects`,
+        type: "POST",
+        async: true,
+        contentType: "application/json",
+        data: JSON.stringify(data),
+        headers: { 'Authorization': getCookie('token') },
+        xhrFields: {
+            withCredentials: apiUrl.indexOf("/secure") != -1 ? true : false
+        },
+        success: function (data, textStatus, jqXHR) {
+            projectID = data.project_id;
+            console.log(`Your Project Id: ${data.project_id}`);
+        },
+        error: handleRunError
+    });
+}
+
+function getProjectFields(){
+    let name = document.getElementById("project-name").innerHTML;
+    let type = document.getElementById("select-language").value;
+
+    // if (sourceEditor.getValue().trim() === "") {
+    //     showError("Error", "Source code can't be empty!");
+    //     return;
+    // } else {
+    //     $runBtn.addClass("loading");
+    // }
+
+    document.getElementById("stdout-dot").hidden = true;
+    document.getElementById("stderr-dot").hidden = true;
+    // document.getElementById("compile-output-dot").hidden = true;
+    document.getElementById("sandbox-message-dot").hidden = true;
+
+    stdoutEditor.setValue("");
+    stderrEditor.setValue("");
+    // compileOutputEditor.setValue("");
+    sandboxMessageEditor.setValue("");
+
+    let data_configs_random=document.getElementById('data-configs-random').checked?1:0;
+    let data_configs_n_test_data = document.getElementById('data-configs-ndata').value;
+    let data_configs_indices = document.getElementById('data-configs-indices').value;
+
+    data_configs_n_test_data = data_configs_n_test_data?data_configs_n_test_data:0;
+    data_configs_indices = '['+data_configs_indices+']';
+    data_configs={
+        random: data_configs_random,
+        n_test_data: data_configs_n_test_data,
+        indices: data_configs_indices
+    }
+    nn_configs=readNNConfigsTableData2Array('nn-configs-table')
+    transfer_nn_configs=readNNConfigsTableData2Array('transfer-nn-configs-table')
+    let experiment_configs = {
+        nn_configs:JSON.stringify(nn_configs),
+        transfer_nn_configs:JSON.stringify(transfer_nn_configs),
+        data_configs:JSON.stringify(data_configs)
+    }
+
+    var sourceValue = encode(sourceEditor.getValue());
+    // var stdinValue = encode(stdinEditor.getValue());
+    var stdinValue=encode(JSON.stringify(experiment_configs));
+    var languageId = resolveLanguageId($selectLanguage.val());
+    var compilerOptions = $compilerOptions.val();
+    var commandLineArguments = $commandLineArguments.val();
+
+    if (parseInt(languageId) === 44) {
+        sourceValue = sourceEditor.getValue();
+    }
+
+    var data = {
+        name: name,
+        type: type,
+        source_code: sourceValue,
+        language_id: languageId,
+        stdin: stdinValue,
+        compiler_options: compilerOptions,
+        command_line_arguments: commandLineArguments,
+        redirect_stderr_to_stdout: redirectStderrToStdout
+    };
+    return data;
+}
+
+async function getProject(projectId){
+    return $.ajax({
+        url:  apiUrl + `/projects/` + projectId,
+        type: "GET",
+        async: true,
+        headers: { 'Authorization': getCookie('token') },
+        success: function (data, textStatus, jqXHR) {
+            console.log("data:", data);
+            handleResult(data.submission);
+            sourceEditor.setValue(decode(data['project'][0]["source_code"]));
+            $selectLanguage.dropdown("set selected", data['project'][0]["language_id"]);
+            $compilerOptions.val(data['project'][0]["compiler_options"]);
+            $commandLineArguments.val(data['project'][0]["command_line_arguments"]);
+            loadSavedConfigs(decode(data['project'][0]["stdin"]))
+            stdoutEditor.setValue(decode(data['project'][0]["stdout"]));
+            stderrEditor.setValue(decode(data['project'][0]["stderr"]));
+            //compileOutputEditor.setValue(decode(data['project'][0]["compile_output"]));
+            sandboxMessageEditor.setValue(decode(data['project'][0]["message"]));
+            document.getElementById('project-name').innerText=data['project'][0]['name'];
+            console.log(data['project'][0]['name'])
+            return data;
+        },
+    });
+}
+async function getProjectStats(projectId){
+    return $.ajax({
+        url:  apiUrl + `/projects_stats/` + projectId,
+        type: "GET",
+        async: true,
+        headers: { 'Authorization': getCookie('token') },
+        success: function (data, textStatus, jqXHR) {
+            console.log("data:", data);
+        },
+    });
+}
+
+async function deleteProject(projectId){
+    if (confirm('Are you sure you want to delete this project?')){
+        return $.ajax({
+            url:  apiUrl + `/projects/` + projectId,
+            type: "DELETE",
+            async: true,
+            headers: { 'Authorization': getCookie('token') },
+            success: function (data, textStatus, jqXHR) {
+                location.reload();
+                return data;
+            },
+        });
+    }
+}
+
+function GetURLParameter(sParam)
+{
+    var sPageURL = window.location.search.substring(1);
+    var sURLVariables = sPageURL.split('&');
+    for (var i = 0; i < sURLVariables.length; i++) 
+    {
+        var sParameterName = sURLVariables[i].split('=');
+        if (sParameterName[0] == sParam) 
+        {
+            return sParameterName[1];
+        }
+    }
+}
+
+
 $(window).resize(function() {
-    layout.updateSize();
-    updateScreenElements();
+    if (layout != undefined){
+        layout.updateSize();
+        updateScreenElements();
+    }
     // showMessages();
 });
 
-$(document).ready(function () {
-    updateScreenElements();
 
-    console.log("Hey, Judge0 IDE is open-sourced: https://github.com/judge0/ide. Have fun!");
+$(document).ready(async function () {
+
+    updateScreenElements(projectID);
+
+    projectID = GetURLParameter('projectId');
 
     $selectLanguage = $("#select-language");
     $selectLanguage.change(function (e) {
@@ -580,7 +802,6 @@ $(document).ready(function () {
 
     $compilerOptions = $("#compiler-options");
     $commandLineArguments = $("#command-line-arguments");
-    $commandLineArguments.attr("size", $commandLineArguments.attr("placeholder").length);
 
     $insertTemplateBtn = $("#insert-template-btn");
     $insertTemplateBtn.click(function (e) {
@@ -615,9 +836,6 @@ $(document).ready(function () {
     });
 
     $statusLine = $("#status-line");
-    createNNConfigsTable(nn_configs, "nn-configs-table");
-    createNNConfigsTable(transfer_nn_configs, "transfer-nn-configs-table");
-    loadDataConfigs();
 
     $("body").keydown(function (e) {
         var keyCode = e.keyCode || e.which;
@@ -742,26 +960,6 @@ $(document).ready(function () {
             });
         });
 
-        // layout.registerComponent("compile output", function (container, state) {
-        //     compileOutputEditor = monaco.editor.create(container.getElement()[0], {
-        //         automaticLayout: true,
-        //         theme: "vs-dark",
-        //         scrollBeyondLastLine: false,
-        //         readOnly: state.readOnly,
-        //         language: "plaintext",
-        //         minimap: {
-        //             enabled: false
-        //         }
-        //     });
-
-            // container.on("tab", function(tab) {
-            //     tab.element.append("<span id=\"compile-output-dot\" class=\"dot\" hidden></span>");
-            //     tab.element.on("mousedown", function(e) {
-            //         e.target.closest(".lm_tab").children[3].hidden = true;
-            //     });
-            // });
-        // });
-
         layout.registerComponent("sandbox message", function (container, state) {
             sandboxMessageEditor = monaco.editor.create(container.getElement()[0], {
                 automaticLayout: true,
@@ -795,8 +993,18 @@ $(document).ready(function () {
         });
 
         layout.init();
+
+        if (projectID != undefined){
+            getProject(projectID);
+        }else{
+            setProjectName();
+            createNNConfigsTable(nn_configs, "nn-configs-table");
+            createNNConfigsTable(transfer_nn_configs, "transfer-nn-configs-table");
+            loadDataConfigs(data_configs);  
+        }
     });
 });
+
 // Template Sources
 
 var TorchSource = "\

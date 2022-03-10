@@ -5,8 +5,7 @@ import onnx
 from onnx_tf.backend import prepare
 from DeepPenNNs import *
 from DeepPenData import MNIST
-from deeprobust.image.defense.TherEncoding import Thermometer
-from deeprobust.image.defense.pgdtraining import PGDtraining
+from deeprobust.image.defense.fgsmtraining import FGSMtraining
 from deeprobust.image.config import defense_params
 
 NETWORKS_PATH="./networks/"
@@ -49,18 +48,18 @@ def train_defense(filename):
     model = net_class([28**2] + [n_nodes for i in range(m_hidden_layers)] +[10])
     net_path = os.path.join(NETWORKS_PATH, filename)
     model.load_state_dict(torch.load(net_path))
-    defense = PGDtraining(model, 'cpu')
-    defense.generate(MNIST.get_train_data(),MNIST.get_test_data(), **defense_params["PGDtraining_MNIST"])
-    return model
+    defense = FGSMtraining(model, 'cpu')
+    defense.generate(MNIST.get_train_data(),MNIST.get_test_data(), **defense_params["FGSMtraining_MNIST"])
+    return 
 
 def main():
     for filename in os.listdir(NETWORKS_PATH):
         ext = os.path.splitext(filename)[1]
         if ext == ".pth" and filename.startswith('MNIST_CNN'):
-            # model = train_defense(filename)
-            onnx_filename = pth2onnx(filename)
-            onnx_filename = filename.replace("model.pth", ".onnx")
-            tf_filename = onnx2tf(onnx_filename)
+            model = train_defense(filename)
+            # onnx_filename = pth2onnx(filename)
+            # onnx_filename = filename.replace("model.pth", ".onnx")
+            # tf_filename = onnx2tf(onnx_filename)
             
 if __name__=="__main__":
     main()

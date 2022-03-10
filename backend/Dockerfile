@@ -3,7 +3,7 @@ FROM python:3.9.10-buster
 #custom code end
 ENV VIRTUAL_PORT 5000
 EXPOSE $VIRTUAL_PORT
-ENV FLASK_APP "routes.py" 
+ENV FLASK_APP "routes.py"
 ENV FLASK_DEBUG 1
 ENV FLASK_ENV "development"
 
@@ -17,7 +17,7 @@ RUN apt-get update &&\
     dnspython==2.1.0 \
     email-validator==1.1.3 \
     Flask==2.0.1 \
-    Flask-Bcrypt==0.7.1 \ 
+    Flask-Bcrypt==0.7.1 \
     Flask-Login==0.5.0 \
     Flask-Migrate==3.1.0 \
     Flask-SQLAlchemy==2.5.1 \

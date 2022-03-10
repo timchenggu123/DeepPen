@@ -1,5 +1,6 @@
 from xml.dom import InvalidModificationErr
 from numpy import indices
+from sklearn.utils import shuffle
 import torchvision
 import os
 from torch.utils.data import DataLoader, Subset
@@ -56,4 +57,19 @@ class MNIST():
         test_loader = DataLoader(
             subset,
             batch_size=batch_size, shuffle=False)
+        return test_loader
+
+    @staticmethod
+    def get_test_data(batch_size = 1000, save_path = './data/MNIST/'):
+        check_directory(save_path)
+        test_set = torchvision.datasets.MNIST(save_path, train=False, download=True,
+                                        transform=torchvision.transforms.Compose([
+                                        torchvision.transforms.ToTensor()
+                                        # ,
+                                        # torchvision.transforms.Normalize(
+                                        #     (0.1307,), (0.3081,))
+                                        ]))
+        test_loader = DataLoader(
+            test_set,
+            batch_size=batch_size, shuffle=True)
         return test_loader
