@@ -410,6 +410,8 @@ function run() {
     }
 
     var data = {
+        name : document.getElementById("project-name").innerHTML,
+        type : document.getElementById("select-language").value,
         source_code: sourceValue,
         language_id: languageId,
         stdin: stdinValue,
@@ -691,34 +693,35 @@ async function getProject(projectId){
         async: true,
         headers: { 'Authorization': getCookie('token') },
         success: function (data, textStatus, jqXHR) {
-            sourceEditor.setValue(decode(data[0]["source_code"]));
-            $selectLanguage.dropdown("set selected", data[0]["language_id"]);
-            $compilerOptions.val(data[0]["compiler_options"]);
-            $commandLineArguments.val(data[0]["command_line_arguments"]);
-            stdinEditor.setValue(decode(data["stdin"]));
-            stdoutEditor.setValue(decode(data[0]["stdout"]));
-            stderrEditor.setValue(decode(data[0]["stderr"]));
-            compileOutputEditor.setValue(decode(data["compile_output"]));
-            sandboxMessageEditor.setValue(decode(data[0]["message"]));
-            var time = (data.time === null ? "-" : data.time + "s");
-            var memory = (data.memory === null ? "-" : data.memory + "KB");
-            $statusLine.html(`${data.status.description}, ${time}, ${memory}`);
+            console.log("data:", data);
+            handleResult(data.submission);
+            sourceEditor.setValue(decode(data['project'][0]["source_code"]));
+            $selectLanguage.dropdown("set selected", data['project'][0]["language_id"]);
+            $compilerOptions.val(data['project'][0]["compiler_options"]);
+            $commandLineArguments.val(data['project'][0]["command_line_arguments"]);
+            //stdinEditor.setValue(decode(data['project'][0]["stdin"]));
+            stdoutEditor.setValue(decode(data['project'][0]["stdout"]));
+            stderrEditor.setValue(decode(data['project'][0]["stderr"]));
+            //compileOutputEditor.setValue(decode(data['project'][0]["compile_output"]));
+            sandboxMessageEditor.setValue(decode(data['project'][0]["message"]));
             return data;
         },
     });
 }
 
 async function deleteProject(projectId){
-    return $.ajax({
-        url:  apiUrl + `/projects/` + projectId,
-        type: "DELETE",
-        async: true,
-        headers: { 'Authorization': getCookie('token') },
-        success: function (data, textStatus, jqXHR) {
-            location.reload();
-            return data;
-        },
-    });
+    if (confirm('Are you sure you want to delete this project?')){
+        return $.ajax({
+            url:  apiUrl + `/projects/` + projectId,
+            type: "DELETE",
+            async: true,
+            headers: { 'Authorization': getCookie('token') },
+            success: function (data, textStatus, jqXHR) {
+                location.reload();
+                return data;
+            },
+        });
+    }
 }
 
 function GetURLParameter(sParam)
