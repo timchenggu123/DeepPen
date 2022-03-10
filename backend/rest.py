@@ -131,7 +131,8 @@ def delete_by_project_id(project_id):
 def get_project_by_id(project_id):
     try:
         project = db.projects.find({"_id": ObjectId(project_id)})
-        submission = db.submissions.find_one({"project_id": project_id})
+        submission = db.submissions.find_one({"project_id": ObjectId(project_id)})
+        app.logger.info(f"submission: {dumps(submission)}")
 
         resp = {'project': project, 'submission': submission}
         app.logger.info(f"submission: {dumps(submission)}")
@@ -231,11 +232,9 @@ def get_submission(submission_token):
         # find submission and save the test results
     
         data = submission.json()
-        app.logger.info(f"submission: {data}")
 
         newvalue = {"$set": data}
         dbResponse = db.submissions.find_one_and_update({"token": submission_token}, newvalue)
-        app.logger.info(f"dbResponse: {dbResponse}")
 
         # if (dbResponse.matchedCount <= 0 and dbResponse.modifiedCount <= 0):
         #         return Response(
@@ -317,9 +316,6 @@ def handle_submission_no_project_id():
 
         # Find project and save the submission id
         project = db.projects.find_one({"_id": ObjectId(project_id)})
-        
-        app.logger.info(f"___project_id: {project_id}")
-        app.logger.info(f"project obehj___project_id: {project['_id']}")
 
         if (project == None):
             return Response(
@@ -330,12 +326,14 @@ def handle_submission_no_project_id():
 
         updated_submission_ids = project["submission_ids"].copy()
         updated_submission_ids.append(dbResponse.inserted_id)
-        d = datetime.datetime.utcnow()
 
+        app.logger.info(f"inserteddd: {updated_submission_ids}")
+        
+        d = datetime.datetime.utcnow()
         newvalues = { "$set": { "submission_ids": updated_submission_ids, "updated_at": d }}
 
         dbResponse = db.project.update_one(
-            {"_id" : project["_id"]}, newvalues)
+            {"_id" : ObjectId(project["_id"])}, newvalues)
         
         return Response(
             response= json.dumps({"token" : token}),
@@ -390,7 +388,7 @@ def handle_submission(project_id):
         newvalues = { "$set": { "submission_ids": updated_submission_ids, "updated_at": d }}
 
         dbResponse = db.project.update_one(
-            {"_id" : project["_id"]}, newvalues)
+            {"_id" : ObjectId(project["_id"])}, newvalues)
 
         return Response(
             response= json.dumps({"token" : token}),
