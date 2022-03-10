@@ -333,6 +333,7 @@ async function createProjectsTable(){
 
         let delAnchor = document.createElement('a');
         delAnchor.setAttribute('onclick', `deleteProject("${project._id.$oid}")`);
+        delAnchor.setAttribute('style', 'cursor: pointer;');
         let del = document.createElement('i');
         del.setAttribute('class', `icon trash`);
         delAnchor.appendChild(del);

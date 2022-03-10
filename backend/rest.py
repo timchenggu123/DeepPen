@@ -131,9 +131,13 @@ def delete_by_project_id(project_id):
 def get_project_by_id(project_id):
     try:
         project = db.projects.find({"_id": ObjectId(project_id)})
+        submission = db.submissions.find_one({"project_id": project_id})
+
+        resp = {'project': project, 'submission': submission}
+        app.logger.info(f"submission: {dumps(submission)}")
 
         return Response(
-            response= dumps(project),
+            response= dumps(resp),
             status= 200,
             mimetype="application/json",
         )
@@ -291,6 +295,7 @@ def handle_submission_no_project_id():
         args = request.args
         body = request.get_json()
 
+        #create a project before we submit
         body["user_id"] = jwt.decode(request.headers["authorization"], "DeepPenetration", algorithms=["HS256"])["sub"]
         project_id = create_project(body)
 
@@ -311,7 +316,10 @@ def handle_submission_no_project_id():
         dbResponse= db.submissions.insert_one(instance)
 
         # Find project and save the submission id
-        project = db.projects.find_one({"_id": project_id})
+        project = db.projects.find_one({"_id": ObjectId(project_id)})
+        
+        app.logger.info(f"___project_id: {project_id}")
+        app.logger.info(f"project obehj___project_id: {project['_id']}")
 
         if (project == None):
             return Response(
@@ -322,7 +330,6 @@ def handle_submission_no_project_id():
 
         updated_submission_ids = project["submission_ids"].copy()
         updated_submission_ids.append(dbResponse.inserted_id)
-
         d = datetime.datetime.utcnow()
 
         newvalues = { "$set": { "submission_ids": updated_submission_ids, "updated_at": d }}
@@ -330,8 +337,6 @@ def handle_submission_no_project_id():
         dbResponse = db.project.update_one(
             {"_id" : project["_id"]}, newvalues)
         
-        #print(dbResponse.inserted_id)
-
         return Response(
             response= json.dumps({"token" : token}),
             status= 200,
