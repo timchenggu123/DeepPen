@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8"> 
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <meta property="og:title" content="Deep Pen">
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js" integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/golden-layout/1.5.9/goldenlayout.min.js" integrity="sha256-NhJAZDfGgv4PiB+GVlSrPdh3uc75XXYSM4su8hgTchI=" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-annotation/1.3.1/chartjs-plugin-annotation.min.js" integrity="sha512-y7WpspnUHkKaewKb/dwPyBDJhigLAA9eH2rdvXGwZonWs/5NpSxKI6ZG2TWQVo+JY+tfNdgPgjcTGDhG/GMriA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    
+    <script>
+        Chart.register('chartjs-plugin-annotation');
+    </script>
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/golden-layout/1.5.9/css/goldenlayout-base.css" integrity="sha256-oIDR18yKFZtfjCJfDsJYpTBv1S9QmxYopeqw2dO96xM=" crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/golden-layout/1.5.9/css/goldenlayout-dark-theme.css" integrity="sha256-ygw8PvSDJJUGLf6Q9KIQsYR3mOmiQNlDaxMLDOx9xL0=" crossorigin="anonymous" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.7.1/jszip.min.js" integrity="sha512-xQBQYt9UcgblF6aCMrwU1NkVA7HCXaSN2oq0so80KO+y68M+n64FOcqgav4igHe6D5ObBLIf68DWv+gfBowczg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+
+    <script>
+        var require = {
+            paths: {
+                "vs": "https://unpkg.com/monaco-editor/min/vs",
+                "monaco-vim": "https://unpkg.com/monaco-vim/dist/monaco-vim",
+                "monaco-emacs": "https://unpkg.com/monaco-emacs/dist/monaco-emacs"
+            }
+        };
+    </script>
+    <script src="https://unpkg.com/monaco-editor/min/vs/loader.js"></script>
+    <script src="https://unpkg.com/monaco-editor@0.32.1/min/vs/editor/editor.main.nls.js"></script>
+    <script src="https://unpkg.com/monaco-editor@0.32.1/min/vs/editor/editor.main.js"></script>
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.4.1/semantic.min.css" integrity="sha256-9mbkOfVho3ZPXfM7W8sV2SndrGDuh7wuyLjtsWeTI1Q=" crossorigin="anonymous" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.4.1/semantic.min.js" integrity="sha256-t8GepnyPmw9t+foMh3mKNvcorqNHamSKtKRxxpUEgFI=" crossorigin="anonymous"></script>
+    
+    <link href="https://fonts.googleapis.com/css?family=Exo+2" rel="stylesheet">
+
+    <script type="text/javascript" src="third_party/download.js"></script>
+
+
+    <link type="text/css" rel="stylesheet" href="css/ide.css">
+
+    <title>DeepPen</title>
+    <link rel="shortcut icon" href="./favicon.ico" type="image/x-icon">
+    <link rel="icon" href="./favicon.ico" type="image/x-icon">
+</head>
+
+<body>
+    <!-- sidebar -->
+    <div class="ui sidebar inverted vertical menu sidebar-menu" id="sidebar">
+        <div class="item">
+            <div class="header">General</div>
+            <div class="menu">
+            <a class="item">
+                <div>
+                <i class="icon tachometer alternate"></i>
+                Dashboard
+                </div>
+            </a>
+            </div>
+        </div>
+        <div class="item">
+            <div class="header">
+            Projects
+            </div>
+            <div class="menu">
+            <a class="item">
+                <div><i class="plus icon"></i>New</div>
+            </a>
+            <a class="item">
+                <div><i class="folder icon"></i>All</div>
+            </a>
+        </div>
+    </div>
+
+    <a href="#" class="item">
+        <div>
+        <i class="icon chart line"></i>
+        Charts
+        </div>
+    </a>
+
+    <a class="item">
+        <div>
+        <i class="icon suitcase"></i>
+        Tools
+        </div>
+    </a>
+    <div class="item">
+        <div class="header">Other</div>
+        <div class="menu">
+        <a href="#" class="item">
+            <div>
+            <i class="icon envelope"></i>
+            Contact
+            </div>
+        </a>
+        </div>
+    </div>
+    <div class="ui segment inverted">
+        <div class="ui tiny olive inverted progress">
+        <div class="bar" style="width: 54%"></div>
+        <div class="label">Monthly Bandwidth</div>
+        </div>
+
+        <div class="ui tiny teal inverted progress">
+        <div class="bar" style="width:78%"></div>
+        <div class="label">Disk Usage</div>
+        </div>
+    </div>
+    </div>
+
+    <!-- sidebar -->
+    <!-- top nav -->
+
+    <nav class="ui top fixed inverted menu">
+    <div class="left menu">
+        <a href="#" class="sidebar-menu-toggler item" data-target="#sidebar">
+        <i class="sidebar icon"></i>
+        </a>
+        <a href="#" class="header item">
+        Deep Pen
+        </a>
+    </div>
+
+    <div class="right menu">
+        <a href="#" class="item">
+        <i class="bell icon"></i>
+        </a>
+        <div class="ui dropdown item">
+        <i class="user cirlce icon"></i>
+        <div class="menu">
+            <a href="#" class="item">
+            <i class="info circle icon"></i> Profile</a
+            >
+            <a href="#" class="item">
+            <i class="wrench icon"></i>
+            Settings</a
+            >
+            <a href="#" class="item">
+            <i class="sign-out icon"></i>
+            Logout
+            </a>
+        </div>
+        </div>
+    </div>
+    </nav>
+    <!-- top nav -->
+
+    <div class="ui main-content" style="background-color:#212121;">
+        <div class="ui inverted vertical segement" style="height: 100%;">
+            <div class="ui inverted labeled icon button" onclick="$('#newchart-configurations').modal('show')">New Chart
+                <i class="add icon"></i>
+            </div>
+            <div id="charts-container" style="height: 90%;"></div>
+        </div>
+    </div>
+
+    <div id="ide-footer" style="display: none">
+        <div id="editor-status-line"></div>
+        <span id="status-line"></span>
+    </div>
+
+
+
+    <div id="newchart-configurations" class="ui modal">
+        <i class="close icon"></i>
+        <div class="header">
+            <i class="wrench icon"></i>
+            New Chart Configurations
+        </div>
+        <div class="content">
+            <div class="ui form">
+                <div class="field">
+                    <label>Type</label>
+                    <select id="select-type" class="ui dropdown">
+                        <option value="0">Speed</option>
+                        <option value="1">Accuracy Diff.</option>
+                        <option value="2">X-similarity</option>
+                    </select>
+                </div>
+                <div class="ui equal height grid">
+                    <div class="six wide column">
+                        <div class="field">
+                            <label>Projects</label>
+                            <select id="select-projects" class="ui dropdown">
+                            </select>
+                        </div>
+                        <div class="field">
+                            <div class="ui button" onclick="addProjectToTable()">Add</div>
+                        </div>
+                    </div>
+                    <div class="ten wide stretched column">
+                        <div id="projects-table" class="ui container"></div>
+                    </div>
+                </div>
+
+                <div class="ui container">
+                    <div class="ui right button" onclick="createNewChart()">Create</div>
+                </div>
+                
+            </div>
+        </div>
+    </div>
+
+</body>
+<script type="text/javascript" src="js/sortable.js"></script>
+<script type="text/javascript" src="js/table.js"></script>
+<script type="text/javascript" src="js/charts.js"></script>
+<script src="./js/dash.js"></script>
+</html>
