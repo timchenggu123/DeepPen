@@ -762,7 +762,6 @@ $(document).ready(async function () {
 
     $compilerOptions = $("#compiler-options");
     $commandLineArguments = $("#command-line-arguments");
-    $commandLineArguments.attr("size", $commandLineArguments.attr("placeholder").length);
 
     $insertTemplateBtn = $("#insert-template-btn");
     $insertTemplateBtn.click(function (e) {
@@ -924,26 +923,6 @@ $(document).ready(async function () {
             });
         });
 
-        // layout.registerComponent("compile output", function (container, state) {
-        //     compileOutputEditor = monaco.editor.create(container.getElement()[0], {
-        //         automaticLayout: true,
-        //         theme: "vs-dark",
-        //         scrollBeyondLastLine: false,
-        //         readOnly: state.readOnly,
-        //         language: "plaintext",
-        //         minimap: {
-        //             enabled: false
-        //         }
-        //     });
-
-            // container.on("tab", function(tab) {
-            //     tab.element.append("<span id=\"compile-output-dot\" class=\"dot\" hidden></span>");
-            //     tab.element.on("mousedown", function(e) {
-            //         e.target.closest(".lm_tab").children[3].hidden = true;
-            //     });
-            // });
-        // });
-
         layout.registerComponent("sandbox message", function (container, state) {
             sandboxMessageEditor = monaco.editor.create(container.getElement()[0], {
                 automaticLayout: true,
@@ -980,6 +959,8 @@ $(document).ready(async function () {
 
         if (projectID != undefined){
             getProject(projectID);
+        }else{
+            setProjectName();
         }
     });
 });

@@ -352,4 +352,10 @@ $(document).ready(function () {
     chartLayout.init();
 })
 
+$(window).resize(function() {
+    if (layout != undefined){
+        layout.updateSize();
+    }
+    // showMessages();
+});
 
