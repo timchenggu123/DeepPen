@@ -30,12 +30,8 @@ app.secret_key = 'HERE_IS_A_KEY'
 
 sandboxUrl = str("http://sandbox") + ":" + str(2358)
 wait = False
-CURR_USER_ID = ""
 
 try:
-#     mongo = pymongo.MongoClient(
-#         "mongodb+srv://martin:DeepPen@cluster0.ldso5.mongodb.net/DeepPen?retryWrites=true&w=majority"
-#     )
     mongo = pymongo.MongoClient(
         host = [ str("mongodb") + ":" + str(27017) ],
         serverSelectionTimeoutMS = 3000, # 3 second timeout
@@ -43,7 +39,6 @@ try:
         password = "DeepPenetration",
     )
     db = mongo.db
-    mongo.server_info()
     print("Successfully connected to db")
 except:
     print("ERROR - Cannot connect to db")
@@ -137,7 +132,7 @@ def get_project_by_id(project_id):
             submission = db.submissions.find({"project_id": project_id}).sort("_id",-1)[0]
         except:
             submission = db.submissions.find({"project_id": ObjectId(project_id)}).sort("_id",-1)[0]
-       
+
         resp = {'project': project, 'submission': submission}
 
         return Response(
@@ -164,7 +159,7 @@ def get_project_stats_by_id(project_id):
             submission = db.submissions.find({"project_id": project_id}).sort("_id",-1)[0]
         except:
             submission = db.submissions.find({"project_id": ObjectId(project_id)}).sort("_id",-1)[0]
-       
+
         resp = {'project': project, 'stats': submission["stats"]}
 
         return Response(
@@ -217,7 +212,7 @@ def save_project():
         else:
             project_id = body["project_id"]
             body["user_id"] = jwt.decode(request.headers["authorization"], "DeepPenetration", algorithms=["HS256"])
-            
+
             project = db.projects.find_one({"_id": project_id})
 
             if (project == None):
@@ -259,7 +254,7 @@ def get_submission(submission_token):
         submission = requests.get(url)
 
         # find submission and save the test results
-    
+
         data = submission.json()
         output = data['compile_output']
         if output:
@@ -270,7 +265,7 @@ def get_submission(submission_token):
             for i in output.items():
                 stats[i[0]] ={"stats":i[1]["stats"]}
             data["stats"]=stats
-        
+
         newvalue = {"$set": data}
         dbResponse = db.submissions.find_one_and_update({"token": submission_token}, newvalue)
 
@@ -366,13 +361,13 @@ def handle_submission_no_project_id():
         updated_submission_ids.append(dbResponse.inserted_id)
 
         app.logger.info(f"inserteddd: {updated_submission_ids}")
-        
+
         d = datetime.datetime.utcnow()
         newvalues = { "$set": { "submission_ids": updated_submission_ids, "updated_at": d }}
 
         dbResponse = db.project.update_one(
             {"_id" : ObjectId(project["_id"])}, newvalues)
-        
+
         return Response(
             response= json.dumps({"token" : token}),
             status= 200,
@@ -383,7 +378,7 @@ def handle_submission_no_project_id():
         print(ex)
 
         return Response(
-            response= json.dumps({"message": "Unable to submit submission", "ex": ex.message}),
+            response= json.dumps({"message": "Unable to submit submission", "ex": ex}),
             status= 500,
             mimetype="application/json",
         )
@@ -473,7 +468,7 @@ def login():
         user = db.users.find_one({
             "username": request_data['user']
         })
-        
+
         user["_id"] = str(user["_id"])
         if not bcrypt.checkpw(request_data["password"].encode('utf-8'), user["password"]):
             return Response(
