@@ -463,20 +463,24 @@ function run() {
     }
 
     if (additional_files){
-        var reader = new FileReader();
-        reader.readAsDataURL(additional_files);
-        reader.onload = function () {
-          let encoded = reader.result.toString().replace(/^data:(.*,)?/, '');
-          if ((encoded.length % 4) > 0) {
-            encoded += '='.repeat(4 - (encoded.length % 4));
-          }
-          console.log(encoded);
-          data["additional_files"] = encoded
-          sendRequest(data);
-        };
-        reader.onerror = function (error) {
-          console.log('Error: ', error);
-        };
+        if (typeof additional_files === "string") {
+            sendRequest(data);
+        } else {
+            var reader = new FileReader();
+            reader.readAsDataURL(additional_files);
+            reader.onload = function () {
+            let encoded = reader.result.toString().replace(/^data:(.*,)?/, '');
+            if ((encoded.length % 4) > 0) {
+                encoded += '='.repeat(4 - (encoded.length % 4));
+            }
+            console.log(encoded);
+            data["additional_files"] = encoded
+            sendRequest(data);
+            };
+            reader.onerror = function (error) {
+            console.log('Error: ', error);
+            };
+        }
     }else{
         sendRequest(data);
     }
@@ -729,7 +733,9 @@ async function getProject(projectId){
             //compileOutputEditor.setValue(decode(data['project'][0]["compile_output"]));
             sandboxMessageEditor.setValue(decode(data['project'][0]["message"]));
             document.getElementById('project-name').innerText=data['project'][0]['name'];
-            console.log(data['project'][0]['name'])
+            additional_files = data["project"][0]["additional_files"];
+            console.log(additional_files);
+            console.log(data['project'][0]['name']);
             return data;
         },
     });
@@ -765,10 +771,10 @@ function GetURLParameter(sParam)
 {
     var sPageURL = window.location.search.substring(1);
     var sURLVariables = sPageURL.split('&');
-    for (var i = 0; i < sURLVariables.length; i++) 
+    for (var i = 0; i < sURLVariables.length; i++)
     {
         var sParameterName = sURLVariables[i].split('=');
-        if (sParameterName[0] == sParam) 
+        if (sParameterName[0] == sParam)
         {
             return sParameterName[1];
         }
@@ -1000,7 +1006,7 @@ $(document).ready(async function () {
             setProjectName();
             createNNConfigsTable(nn_configs, "nn-configs-table");
             createNNConfigsTable(transfer_nn_configs, "transfer-nn-configs-table");
-            loadDataConfigs(data_configs);  
+            loadDataConfigs(data_configs);
         }
     });
 });

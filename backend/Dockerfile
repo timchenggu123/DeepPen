@@ -46,6 +46,8 @@ RUN pip3 uninstall JWT &&\
 
 WORKDIR /server
 
+RUN mkdir /server/additional_files
+
 COPY . .
 
 

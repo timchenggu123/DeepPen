@@ -15,6 +15,7 @@ import bcrypt
 import datetime
 import jwt
 import base64
+import os
 
 from enum import Enum
 
@@ -82,7 +83,7 @@ def authenticate():
 @cross_origin()
 def get_all_projects():
     try:
-        projects = db.projects.find({"user_id": jwt.decode(request.headers["authorization"])["sub"]})
+        projects = db.projects.find({"user_id": jwt.decode(request.headers["authorization"], "DeepPenetration", algorithms=["HS256"])["sub"]})
 
         return Response(
             response= dumps(projects),
@@ -155,10 +156,12 @@ def get_project_by_id(project_id):
 def get_project_stats_by_id(project_id):
     try:
         project = db.projects.find({"_id": ObjectId(project_id)})
-        try:
-            submission = db.submissions.find({"project_id": project_id}).sort("_id",-1)[0]
-        except:
-            submission = db.submissions.find({"project_id": ObjectId(project_id)}).sort("_id",-1)[0]
+        latest_submission_id = project["submission_ids"][-1]
+        submission = db.submissions.find({"_id": latest_submission_id})
+        # try:
+        #     submission = db.submissions.find({"project_id": project_id}).sort("_id",-1)[0]
+        # except:
+        #     submission = db.submissions.find({"project_id": ObjectId(project_id)}).sort("_id",-1)[0]
 
         resp = {'project': project, 'stats': submission["stats"]}
 
@@ -188,6 +191,7 @@ def create_project(body):
     }
 
     dbResponse = db.projects.insert_one(instance)
+    db.projects.update_one({"_id": dbResponse.inserted_id}, {"$set": {"project_id": str(dbResponse.inserted_id)}})
     return dbResponse.inserted_id
 
 
@@ -254,7 +258,6 @@ def get_submission(submission_token):
         submission = requests.get(url)
 
         # find submission and save the test results
-
         data = submission.json()
         output = data['compile_output']
         if output:
@@ -267,7 +270,7 @@ def get_submission(submission_token):
             data["stats"]=stats
 
         newvalue = {"$set": data}
-        dbResponse = db.submissions.find_one_and_update({"token": submission_token}, newvalue)
+        dbResponse = db.submissions.update_one({"token": submission_token}, newvalue)
 
         # if (dbResponse.matchedCount <= 0 and dbResponse.modifiedCount <= 0):
         #         return Response(
@@ -339,9 +342,16 @@ def handle_submission_no_project_id():
         res = submission.json()
         token = res["token"]
 
-        # remove additional files from body
-        # we don't want to save them in mongodb
-        del body["additional_files"]
+        filename = str(project_id) + "@additional_files.txt"
+        # file passed in save to local
+        if "additional_files" in body:
+            filepath = "./additional_files/" + filename
+
+            with open(filepath, "w") as f:
+                f.write(body["additional_files"])
+            # remove additional files from body
+            # we want to save filename in mongodb
+            body["additional_files"] = filename
 
         instance = {
             "project_id" : project_id,
@@ -367,10 +377,9 @@ def handle_submission_no_project_id():
         app.logger.info(f"inserteddd: {updated_submission_ids}")
 
         d = datetime.datetime.utcnow()
-        newvalues = { "$set": { "submission_ids": updated_submission_ids, "updated_at": d }}
+        newvalues = { "$set": { "submission_ids": updated_submission_ids, "updated_at": d, "additional_files":  filename}}
 
-        dbResponse = db.project.update_one(
-            {"_id" : ObjectId(project["_id"])}, newvalues)
+        dbResponse = db.projects.update_one({"_id" : ObjectId(project["_id"])}, newvalues)
 
         return Response(
             response= json.dumps({"token" : token}),
@@ -395,7 +404,7 @@ def handle_submission(project_id):
         args = request.args
         body = request.get_json()
 
-        # Find project and save the submission id
+        # Find project
         project = db.projects.find_one({"_id": ObjectId(project_id)})
 
         if (project == None):
@@ -405,14 +414,33 @@ def handle_submission(project_id):
                 mimetype="application/json",
             )
 
+        passed_as_filename = False
+        filename = project_id + "@additional_files.txt"
+        # handle additional files
+        if "additional_files" in body:
+            filepath = "./additional_files/" + filename
+
+            # filename passed in as param
+            if (len(filename) == len(body["additional_files"])):
+                passed_as_filename = True
+                if os.path.exists(filepath):
+                    with open(filepath, "r") as f:
+                        body["additional_files"] = f.read()
+
         url = sandboxUrl + f"/submissions?base64_encoded=true&wait={args['wait']}"
         submission = requests.post(url, data=body)
         res = submission.json()
         token = res["token"]
 
-        # remove additional files from body
-        # we don't want to save them in mongodb
-        del body["additional_files"]
+        # save additional files to local
+        if "additional_files" in body:
+            if not passed_as_filename:
+                with open("/additional_files/" + filename, "w") as f:
+                    f.write(body["additional_files"])
+
+            # remove additional files from body
+            # we want to save th filename in mongodb
+            body["additional_files"] = filename
 
         instance = {
             "project_id" : project_id,
@@ -426,10 +454,9 @@ def handle_submission(project_id):
         updated_submission_ids.append(dbResponse.inserted_id)
         d = datetime.datetime.utcnow()
 
-        newvalues = { "$set": { "submission_ids": updated_submission_ids, "updated_at": d }}
+        newvalues = { "$set": { "submission_ids": updated_submission_ids, "updated_at": d, "additional_files": filename }}
 
-        dbResponse = db.project.update_one(
-            {"_id" : ObjectId(project["_id"])}, newvalues)
+        dbResponse = db.projects.update_one({"_id" : ObjectId(project["_id"])}, newvalues)
 
         return Response(
             response= json.dumps({"token" : token}),
