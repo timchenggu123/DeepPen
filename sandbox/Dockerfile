@@ -37,32 +37,68 @@ RUN apt-get update && \
     apt-get -y install cmake protobuf-compiler libprotoc-dev&&\
     rm -rf /var/lib/apt/lists/*
 
-RUN apt-get update &&\
-    apt-get install -y python3 python3-pip &&\
-    pip3 install --upgrade pip &&\
-    pip3 install\
-    torch   \ 
-    torchvision &&\
-    rm -rf /var/lib/apt/lists/* 
+#############install conda
+ENV CONDA_DIR /opt/conda
+RUN wget --quiet https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O ~/miniconda.sh && \
+     /bin/bash ~/miniconda.sh -b -p /opt/conda &&\
+     rm -rf ~/miniconda.sh
+ENV PATH=$CONDA_DIR/bin:$PATH
 
-RUN apt-get update &&\
-    pip3 install \
-    mlxtend         \
-    numpy         \
-    pandas         \
-    scikit-learn      \   
+SHELL ["/bin/bash", "-c"] 
+
+
+############install python 3.8
+RUN conda init && \
+    source /root/.bashrc&&\
+    yes | conda create --name python_3.8 python=3.8 && conda activate python_3.8 &&\
+    pip install \
+    virtualenv \
+    numpy \
+    torch \ 
+    torchvision \
+    mlxtend \
+    pandas \
+    scikit-learn \   
     cleverhans \
-    scipy &&     \
-    rm -rf /var/lib/apt/lists/* 
+    scipy
 
-RUN apt-get update &&\
-    pip3 install \
+RUN conda init && \ 
+    source /root/.bashrc &&\
+    conda activate python_3.8 &&\pip install \
     typing-extensions \
-    tensorflow==2.7 \
+    tensorflow==2.2 \
+    tensorflow-addons==0.10.0
+
+RUN conda init && \ 
+    source /root/.bashrc &&\
+    conda activate python_3.8 &&\pip install \
+    pip install \
     onnx \
-    onnx-tf \
-    &&\
-    rm -rf /var/lib/apt/lists/* 
+    onnx-tf 
+
+############install python 3.9
+RUN conda init && \
+    source /root/.bashrc&&\
+    yes | conda create --name python_3.9 python=3.9 && conda activate python_3.9 &&\
+    pip install \
+    virtualenv \
+    numpy \
+    torch \ 
+    torchvision \
+    mlxtend \
+    pandas \
+    scikit-learn \   
+    cleverhans \
+    scipy
+
+RUN pip install \
+    typing-extensions \
+    tensorflow==2.5 \
+    tensorflow-addons==0.13.0
+
+RUN pip install \
+    onnx \
+    onnx-tf 
 
 # #custom code end
 ENV VIRTUAL_PORT 2358

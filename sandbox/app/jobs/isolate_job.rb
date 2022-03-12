@@ -15,7 +15,8 @@ class IsolateJob < ApplicationJob
               :box_id, :workdir, :boxdir, :tmpdir,
               :source_file, :stdin_file, :stdout_file,
               :stderr_file, :metadata_file, :additional_files_archive_file,
-              :asset_files, :results_file, :additional_files_dir
+              :asset_files, :results_file, :additional_files_dir,
+              :requirements_file, :envdir
 
   def perform(submission_id)
     @submission = Submission.find(submission_id)
@@ -69,7 +70,9 @@ class IsolateJob < ApplicationJob
     @additional_files_archive_file = boxdir + "/" + ADDITIONAL_FILES_ARCHIVE_FILE_NAME
     @results_file = boxdir + "/" + RESULTS_FILE_NAME
     @additional_files_dir = boxdir + "/" + ADDITIONAL_FILES_DIR_NAME
-    
+    @requirements_file=additional_files_dir + "/" + "requirements.txt"
+    @envdir = tmpdir + "/env"
+
     [results_file, stdin_file, stdout_file, stderr_file, metadata_file].each do |f|
       initialize_file(f)
     end
@@ -80,8 +83,27 @@ class IsolateJob < ApplicationJob
     extract_archive
     copy_main
     init_data_path
+
+    puts "Installing requirements"
+    install_requirements
   end
   
+  def install_requirements
+    if File.exists?(requirements_file)
+      #find the difference between requirements. 
+      pip = submission.language.compile_cmd
+      `export PYTHONPATH=$(pip show pip | awk '/Location/ {print $2 }'):#{envdir}`
+      puts "export PYTHONPATH=$(pip show pip | awk '/Location/ {print $2 }'):#{envdir}"
+      puts "/bin/bash #{pip} install -t #{envdir} -r #{requirements_file}"
+      error=`#{pip} install -t #{envdir} -r #{requirements_file} -q`
+      if error.present?
+        raise "failed to install requirements: #{output}"
+      end
+    else
+      puts "No requirements.txt found at #{requirements_file}"
+    end
+  end
+
   def copy_main
     `cp /api/assets/main.py #{boxdir + "/" + "main.py"}`
   end 
