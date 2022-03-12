@@ -5,25 +5,25 @@
     id:420,
     name: "DeepPen Torch",
     is_archive: false,
-    compile_cmd:"/opt/conda/envs/python_3.9/bin/pip",
+    compile_cmd:"/usr/local/python_3.9/bin/pip",
     source_file: "algorithm.py",
-    run_cmd: "/opt/conda/envs/python_3.8/bin/python main.py torch"
+    run_cmd: "/usr/local/python_3.8/bin/python main.py torch"
   },
   {
     id:421,
     name: "DeepPen TF Python 3.8",
-    compile_cmd: "/opt/conda/envs/python_3.8/bin/pip",
+    compile_cmd: "/usr/local/python_3.8/bin/pip",
     is_archive: false,
     source_file: "algorithm.py",
-    run_cmd: "/opt/conda/envs/python_3.8/bin/python main.py tf"
+    run_cmd: "/usr/local/python_3.8/bin/python main.py tf"
   },
   {
     id:422,
     name: "DeepPen TF Python 3.9",
     is_archive: false,
-    compile_cmd: "/opt/conda/envs/python_3.9/bin/pip",
+    compile_cmd: "/usr/local/python_3.9/bin/pip",
     source_file: "algorithm.py",
-    run_cmd: "/opt/conda/envs/python_3.9/bin/python main.py tf"
+    run_cmd: "/usr/local/python_3.9/bin/python main.py tf"
   },
 
   {

@@ -50,7 +50,7 @@ SHELL ["/bin/bash", "-c"]
 ############install python 3.8
 RUN conda init && \
     source /root/.bashrc&&\
-    yes | conda create --name python_3.8 python=3.8 && conda activate python_3.8 &&\
+    yes | conda create -p /usr/local/python_3.8 python=3.8 && conda activate /usr/local/python_3.8 &&\
     pip install \
     virtualenv \
     numpy \
@@ -64,14 +64,14 @@ RUN conda init && \
 
 RUN conda init && \ 
     source /root/.bashrc &&\
-    conda activate python_3.8 &&\pip install \
+    conda activate /usr/local/python_3.8 &&\pip install \
     typing-extensions \
     tensorflow==2.2 \
     tensorflow-addons==0.10.0
 
 RUN conda init && \ 
     source /root/.bashrc &&\
-    conda activate python_3.8 &&\pip install \
+    conda activate /usr/local/python_3.8 &&\pip install \
     pip install \
     onnx \
     onnx-tf 
@@ -79,7 +79,7 @@ RUN conda init && \
 ############install python 3.9
 RUN conda init && \
     source /root/.bashrc&&\
-    yes | conda create --name python_3.9 python=3.9 && conda activate python_3.9 &&\
+    yes | conda create -p /usr/local/python_3.9 python=3.9 && conda activate /usr/local/python_3.9 &&\
     pip install \
     virtualenv \
     numpy \
@@ -91,12 +91,16 @@ RUN conda init && \
     cleverhans \
     scipy
 
-RUN pip install \
+RUN conda init && \ 
+    source /root/.bashrc &&\
+    conda activate /usr/local/python_3.8 &&\pip install \
     typing-extensions \
     tensorflow==2.5 \
     tensorflow-addons==0.13.0
 
-RUN pip install \
+RUN conda init && \ 
+    source /root/.bashrc &&\
+    conda activate /usr/local/python_3.8 &&\pip install \
     onnx \
     onnx-tf 
 

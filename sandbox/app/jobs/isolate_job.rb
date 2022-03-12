@@ -27,10 +27,10 @@ class IsolateJob < ApplicationJob
     submission.update(status: Status.process)
     submission.number_of_runs.times do
       initialize_workdir
-      if compile == :failure
-        cleanup
-        return
-      end
+      # if compile == :failure
+        # cleanup
+        # return
+      # end
       run
       verify
 
