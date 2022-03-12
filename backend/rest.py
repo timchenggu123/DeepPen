@@ -15,6 +15,7 @@ import bcrypt
 import datetime
 import jwt
 import base64
+import os
 
 from enum import Enum
 
@@ -30,12 +31,8 @@ app.secret_key = 'HERE_IS_A_KEY'
 
 sandboxUrl = str("http://sandbox") + ":" + str(2358)
 wait = False
-CURR_USER_ID = ""
 
 try:
-#     mongo = pymongo.MongoClient(
-#         "mongodb+srv://martin:DeepPen@cluster0.ldso5.mongodb.net/DeepPen?retryWrites=true&w=majority"
-#     )
     mongo = pymongo.MongoClient(
         host = [ str("mongodb") + ":" + str(27017) ],
         serverSelectionTimeoutMS = 3000, # 3 second timeout
@@ -43,7 +40,6 @@ try:
         password = "DeepPenetration",
     )
     db = mongo.db
-    mongo.server_info()
     print("Successfully connected to db")
 except:
     print("ERROR - Cannot connect to db")
@@ -87,7 +83,7 @@ def authenticate():
 @cross_origin()
 def get_all_projects():
     try:
-        projects = db.projects.find({"user_id": jwt.decode(request.headers["authorization"])["sub"]})
+        projects = db.projects.find({"user_id": jwt.decode(request.headers["authorization"], "DeepPenetration", algorithms=["HS256"])["sub"]})
 
         return Response(
             response= dumps(projects),
@@ -99,7 +95,7 @@ def get_all_projects():
         print(ex)
 
         return Response(
-            response= json.dumps({"message": "Unable to get all projects", "ex": ex.message}),
+            response= json.dumps({"message": "Unable to get all projects", "ex": str(ex)}),
             status= 500,
             mimetype="application/json",
         )
@@ -122,7 +118,7 @@ def delete_by_project_id(project_id):
         print(ex)
 
         return Response(
-            response= json.dumps({"message": "Unable to delete project", "ex": ex.message}),
+            response= json.dumps({"message": "Unable to delete project", "ex": str(ex)}),
             status= 500,
             mimetype="application/json",
         )
@@ -137,7 +133,7 @@ def get_project_by_id(project_id):
             submission = db.submissions.find({"project_id": project_id}).sort("_id",-1)[0]
         except:
             submission = db.submissions.find({"project_id": ObjectId(project_id)}).sort("_id",-1)[0]
-       
+
         resp = {'project': project, 'submission': submission}
 
         return Response(
@@ -150,7 +146,7 @@ def get_project_by_id(project_id):
         print(ex)
 
         return Response(
-            response= json.dumps({"message": f"Unable to get project {project_id}", "ex": ex.message}),
+            response= json.dumps({"message": f"Unable to get project {project_id}", "ex": str(ex)}),
             status= 500,
             mimetype="application/json",
         )
@@ -160,11 +156,13 @@ def get_project_by_id(project_id):
 def get_project_stats_by_id(project_id):
     try:
         project = db.projects.find({"_id": ObjectId(project_id)})
-        try:
-            submission = db.submissions.find({"project_id": project_id}).sort("_id",-1)[0]
-        except:
-            submission = db.submissions.find({"project_id": ObjectId(project_id)}).sort("_id",-1)[0]
-       
+        latest_submission_id = project["submission_ids"][-1]
+        submission = db.submissions.find({"_id": latest_submission_id})
+        # try:
+        #     submission = db.submissions.find({"project_id": project_id}).sort("_id",-1)[0]
+        # except:
+        #     submission = db.submissions.find({"project_id": ObjectId(project_id)}).sort("_id",-1)[0]
+
         resp = {'project': project, 'stats': submission["stats"]}
 
         return Response(
@@ -177,7 +175,7 @@ def get_project_stats_by_id(project_id):
         print(ex)
 
         return Response(
-            response= json.dumps({"message": f"Unable to get project {project_id}", "ex": ex.message}),
+            response= json.dumps({"message": f"Unable to get project {project_id}", "ex": str(ex)}),
             status= 500,
             mimetype="application/json",
         )
@@ -193,6 +191,7 @@ def create_project(body):
     }
 
     dbResponse = db.projects.insert_one(instance)
+    db.projects.update_one({"_id": dbResponse.inserted_id}, {"$set": {"project_id": str(dbResponse.inserted_id)}})
     return dbResponse.inserted_id
 
 
@@ -217,7 +216,7 @@ def save_project():
         else:
             project_id = body["project_id"]
             body["user_id"] = jwt.decode(request.headers["authorization"], "DeepPenetration", algorithms=["HS256"])
-            
+
             project = db.projects.find_one({"_id": project_id})
 
             if (project == None):
@@ -245,7 +244,7 @@ def save_project():
         print(ex)
 
         return Response(
-            response= json.dumps({"message": f"Unable to update project {project_id}", "ex": ex.message}),
+            response= json.dumps({"message": f"Unable to update project {project_id}", "ex": str(ex)}),
             status= 500,
             mimetype="application/json",
         )
@@ -259,7 +258,6 @@ def get_submission(submission_token):
         submission = requests.get(url)
 
         # find submission and save the test results
-    
         data = submission.json()
         output = data['compile_output']
         if output:
@@ -270,9 +268,9 @@ def get_submission(submission_token):
             for i in output.items():
                 stats[i[0]] ={"stats":i[1]["stats"]}
             data["stats"]=stats
-        
+
         newvalue = {"$set": data}
-        dbResponse = db.submissions.find_one_and_update({"token": submission_token}, newvalue)
+        dbResponse = db.submissions.update_one({"token": submission_token}, newvalue)
 
         # if (dbResponse.matchedCount <= 0 and dbResponse.modifiedCount <= 0):
         #         return Response(
@@ -294,7 +292,7 @@ def get_submission(submission_token):
         print(ex)
 
         return Response(
-            response= json.dumps({"message": f"Unable to fetch submission {submission_token}", "ex": ex.message}),
+            response= json.dumps({"message": f"Unable to fetch submission {submission_token}", "ex": str(ex)}),
             status= 500,
             mimetype="application/json",
         )
@@ -320,7 +318,7 @@ def get_all_project_submissions(project_id):
         print(ex)
 
         return Response(
-            response= json.dumps({"message": f"Unable to fetch submissions for project {project_id}", "ex": ex.message}),
+            response= json.dumps({"message": f"Unable to fetch submissions for project {project_id}", "ex": str(ex)}),
             status= 500,
             mimetype="application/json",
         )
@@ -344,6 +342,17 @@ def handle_submission_no_project_id():
         res = submission.json()
         token = res["token"]
 
+        filename = str(project_id) + "@additional_files.txt"
+        # file passed in save to local
+        if "additional_files" in body:
+            filepath = "./additional_files/" + filename
+
+            with open(filepath, "w") as f:
+                f.write(body["additional_files"])
+            # remove additional files from body
+            # we want to save filename in mongodb
+            body["additional_files"] = filename
+
         instance = {
             "project_id" : project_id,
             "token": token,
@@ -366,13 +375,12 @@ def handle_submission_no_project_id():
         updated_submission_ids.append(dbResponse.inserted_id)
 
         app.logger.info(f"inserteddd: {updated_submission_ids}")
-        
-        d = datetime.datetime.utcnow()
-        newvalues = { "$set": { "submission_ids": updated_submission_ids, "updated_at": d }}
 
-        dbResponse = db.project.update_one(
-            {"_id" : ObjectId(project["_id"])}, newvalues)
-        
+        d = datetime.datetime.utcnow()
+        newvalues = { "$set": { "submission_ids": updated_submission_ids, "updated_at": d, "additional_files":  filename}}
+
+        dbResponse = db.projects.update_one({"_id" : ObjectId(project["_id"])}, newvalues)
+
         return Response(
             response= json.dumps({"token" : token}),
             status= 200,
@@ -383,7 +391,7 @@ def handle_submission_no_project_id():
         print(ex)
 
         return Response(
-            response= json.dumps({"message": "Unable to submit submission", "ex": ex.message}),
+            response= json.dumps({"message": "Unable to submit submission", "ex": str(ex)}),
             status= 500,
             mimetype="application/json",
         )
@@ -396,7 +404,7 @@ def handle_submission(project_id):
         args = request.args
         body = request.get_json()
 
-        # Find project and save the submission id
+        # Find project
         project = db.projects.find_one({"_id": ObjectId(project_id)})
 
         if (project == None):
@@ -406,10 +414,33 @@ def handle_submission(project_id):
                 mimetype="application/json",
             )
 
+        passed_as_filename = False
+        filename = project_id + "@additional_files.txt"
+        # handle additional files
+        if "additional_files" in body:
+            filepath = "./additional_files/" + filename
+
+            # filename passed in as param
+            if (len(filename) == len(body["additional_files"])):
+                passed_as_filename = True
+                if os.path.exists(filepath):
+                    with open(filepath, "r") as f:
+                        body["additional_files"] = f.read()
+
         url = sandboxUrl + f"/submissions?base64_encoded=true&wait={args['wait']}"
         submission = requests.post(url, data=body)
         res = submission.json()
         token = res["token"]
+
+        # save additional files to local
+        if "additional_files" in body:
+            if not passed_as_filename:
+                with open("/additional_files/" + filename, "w") as f:
+                    f.write(body["additional_files"])
+
+            # remove additional files from body
+            # we want to save th filename in mongodb
+            body["additional_files"] = filename
 
         instance = {
             "project_id" : project_id,
@@ -423,10 +454,9 @@ def handle_submission(project_id):
         updated_submission_ids.append(dbResponse.inserted_id)
         d = datetime.datetime.utcnow()
 
-        newvalues = { "$set": { "submission_ids": updated_submission_ids, "updated_at": d }}
+        newvalues = { "$set": { "submission_ids": updated_submission_ids, "updated_at": d, "additional_files": filename }}
 
-        dbResponse = db.project.update_one(
-            {"_id" : ObjectId(project["_id"])}, newvalues)
+        dbResponse = db.projects.update_one({"_id" : ObjectId(project["_id"])}, newvalues)
 
         return Response(
             response= json.dumps({"token" : token}),
@@ -438,7 +468,7 @@ def handle_submission(project_id):
         print(ex)
 
         return Response(
-            response= json.dumps({"message": "Unable to submit submission", "ex": ex.message}),
+            response= json.dumps({"message": "Unable to submit submission", "ex": str(ex)}),
             status= 500,
             mimetype="application/json",
         )
@@ -473,7 +503,7 @@ def login():
         user = db.users.find_one({
             "username": request_data['user']
         })
-        
+
         user["_id"] = str(user["_id"])
         if not bcrypt.checkpw(request_data["password"].encode('utf-8'), user["password"]):
             return Response(

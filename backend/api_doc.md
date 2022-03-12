@@ -80,5 +80,3 @@
 
 - POST `/projects/<project_id>/submissions`
 : request to start an evaluation. The body must contain the fields: `source_code, language_id, stdin, compiler_options, command_line_arguments, redirect_stderr_to_stdout`.
-
-
