@@ -339,6 +339,10 @@ def handle_submission_no_project_id():
         res = submission.json()
         token = res["token"]
 
+        # remove additional files from body
+        # we don't want to save them in mongodb
+        del body["additional_files"]
+
         instance = {
             "project_id" : project_id,
             "token": token,
