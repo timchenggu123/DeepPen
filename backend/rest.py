@@ -94,7 +94,7 @@ def get_all_projects():
         print(ex)
 
         return Response(
-            response= json.dumps({"message": "Unable to get all projects", "ex": ex.message}),
+            response= json.dumps({"message": "Unable to get all projects", "ex": str(ex)}),
             status= 500,
             mimetype="application/json",
         )
@@ -117,7 +117,7 @@ def delete_by_project_id(project_id):
         print(ex)
 
         return Response(
-            response= json.dumps({"message": "Unable to delete project", "ex": ex.message}),
+            response= json.dumps({"message": "Unable to delete project", "ex": str(ex)}),
             status= 500,
             mimetype="application/json",
         )
@@ -145,7 +145,7 @@ def get_project_by_id(project_id):
         print(ex)
 
         return Response(
-            response= json.dumps({"message": f"Unable to get project {project_id}", "ex": ex.message}),
+            response= json.dumps({"message": f"Unable to get project {project_id}", "ex": str(ex)}),
             status= 500,
             mimetype="application/json",
         )
@@ -172,7 +172,7 @@ def get_project_stats_by_id(project_id):
         print(ex)
 
         return Response(
-            response= json.dumps({"message": f"Unable to get project {project_id}", "ex": ex.message}),
+            response= json.dumps({"message": f"Unable to get project {project_id}", "ex": str(ex)}),
             status= 500,
             mimetype="application/json",
         )
@@ -240,7 +240,7 @@ def save_project():
         print(ex)
 
         return Response(
-            response= json.dumps({"message": f"Unable to update project {project_id}", "ex": ex.message}),
+            response= json.dumps({"message": f"Unable to update project {project_id}", "ex": str(ex)}),
             status= 500,
             mimetype="application/json",
         )
@@ -289,7 +289,7 @@ def get_submission(submission_token):
         print(ex)
 
         return Response(
-            response= json.dumps({"message": f"Unable to fetch submission {submission_token}", "ex": ex.message}),
+            response= json.dumps({"message": f"Unable to fetch submission {submission_token}", "ex": str(ex)}),
             status= 500,
             mimetype="application/json",
         )
@@ -315,7 +315,7 @@ def get_all_project_submissions(project_id):
         print(ex)
 
         return Response(
-            response= json.dumps({"message": f"Unable to fetch submissions for project {project_id}", "ex": ex.message}),
+            response= json.dumps({"message": f"Unable to fetch submissions for project {project_id}", "ex": str(ex)}),
             status= 500,
             mimetype="application/json",
         )
@@ -378,7 +378,7 @@ def handle_submission_no_project_id():
         print(ex)
 
         return Response(
-            response= json.dumps({"message": "Unable to submit submission", "ex": ex}),
+            response= json.dumps({"message": "Unable to submit submission", "ex": str(ex)}),
             status= 500,
             mimetype="application/json",
         )
@@ -405,6 +405,10 @@ def handle_submission(project_id):
         submission = requests.post(url, data=body)
         res = submission.json()
         token = res["token"]
+
+        # remove additional files from body
+        # we don't want to save them in mongodb
+        del body["additional_files"]
 
         instance = {
             "project_id" : project_id,
@@ -433,7 +437,7 @@ def handle_submission(project_id):
         print(ex)
 
         return Response(
-            response= json.dumps({"message": "Unable to submit submission", "ex": ex.message}),
+            response= json.dumps({"message": "Unable to submit submission", "ex": str(ex)}),
             status= 500,
             mimetype="application/json",
         )
