@@ -72,7 +72,7 @@ def generate_token(user_id):
 def authenticate():
     if request.method == "OPTIONS":
         return Response(status=200)
-    if request.endpoint != "login" and request.endpoint != "register":
+    if request.endpoint != "login" and request.endpoint != "register" and request.endpoint != "logout":
         if not auth(request):
             return Response(
                 status=401
@@ -206,7 +206,7 @@ def create_project(body):
 def save_project():
     try:
         body = request.get_json()
-                                                            
+
         # project_id is not given
         # creates new project
         if "project_id" not in body:
@@ -537,18 +537,10 @@ def login():
 @app.route("/logout", methods=["POST"])
 def logout():
     try:
-        request_data = request.get_json()
-        user = db.users.find_one({
-            "username": request_data['user']
-        })
+        user_id = jwt.decode(request.headers["authorization"], "DeepPenetration", algorithms=["HS256"])["sub"]
+        user = db.users.find_one({"_id": ObjectId(user_id)})
 
-        user["_id"] = str(user["_id"])
-        if not bcrypt.checkpw(request_data["password"].encode('utf-8'), user["password"]):
-            return Response(
-                status=401
-            )
-
-        db.tokens.update_many({"user" : ObjectId(user["_id"])}, {"$set": {"valid": False}})
+        db.tokens.update_many({"user" : user["_id"]}, {"$set": {"valid": False}})
 
         return Response(
             response= json.dumps({

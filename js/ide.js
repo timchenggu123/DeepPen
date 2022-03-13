@@ -244,6 +244,7 @@ function handleResult(data) {
     createAdvTable(resultsData);
     document.getElementById("results").style.display = "block";
     document.getElementById("results").scrollIntoView(true);
+    // window.location.replace(`/ide.html?projectId=` + data.project_id.toString())
 }
 
 function getIdFromURI() {
