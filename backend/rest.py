@@ -128,7 +128,7 @@ def delete_by_project_id(project_id):
 @cross_origin()
 def get_project_by_id(project_id):
     try:
-        project = db.projects.find({"_id": ObjectId(project_id)})
+        project = db.projects.find_one({"_id": ObjectId(project_id)})
 
         latest_submission_id = project["submission_ids"][-1]
         submission = db.submissions.find_one({"_id": latest_submission_id})
@@ -159,7 +159,7 @@ def get_project_by_id(project_id):
 @cross_origin()
 def get_project_stats_by_id(project_id):
     try:
-        project = db.projects.find({"_id": ObjectId(project_id)})
+        project = db.projects.find_one({"_id": ObjectId(project_id)})
 
         latest_submission_id = project["submission_ids"][-1]
         submission = db.submissions.find_one({"_id": latest_submission_id})
