@@ -16,7 +16,7 @@ class IsolateJob < ApplicationJob
               :source_file, :stdin_file, :stdout_file,
               :stderr_file, :metadata_file, :additional_files_archive_file,
               :asset_files, :results_file, :additional_files_dir,
-              :requirements_file, :envdir
+              :requirements_file, :envdir, :pythonpath
 
   def perform(submission_id)
     @submission = Submission.find(submission_id)
@@ -71,7 +71,8 @@ class IsolateJob < ApplicationJob
     @results_file = boxdir + "/" + RESULTS_FILE_NAME
     @additional_files_dir = boxdir + "/" + ADDITIONAL_FILES_DIR_NAME
     @requirements_file=additional_files_dir + "/" + "requirements.txt"
-    @envdir = tmpdir + "/env"
+    @envdir = boxdir + "/env"
+    @pythonpath="/box/env"
 
     [results_file, stdin_file, stdout_file, stderr_file, metadata_file].each do |f|
       initialize_file(f)
@@ -90,15 +91,16 @@ class IsolateJob < ApplicationJob
   
   def install_requirements
     if File.exists?(requirements_file)
-      #find the difference between requirements. 
+      `mkdir #{envdir}`
       pip = submission.language.compile_cmd
-      `export PYTHONPATH=$(pip show pip | awk '/Location/ {print $2 }'):#{envdir}`
-      puts "export PYTHONPATH=$(pip show pip | awk '/Location/ {print $2 }'):#{envdir}"
-      puts "/bin/bash #{pip} install -t #{envdir} -r #{requirements_file}"
-      error=`#{pip} install -t #{envdir} -r #{requirements_file} -q`
-      if error.present?
-        raise "failed to install requirements: #{output}"
-      end
+      
+      puts "#{pythonpath}"
+      puts "#{envdir}"
+      puts "running '#{pip} install -t #{envdir} -r #{requirements_file}'"
+      puts `#{pip} install -t #{envdir} -r #{requirements_file}`
+      # if error.present?
+      #   raise "failed to install requirements: #{output}"
+      # end
     else
       puts "No requirements.txt found at #{requirements_file}"
     end
@@ -121,10 +123,9 @@ class IsolateJob < ApplicationJob
 
     File.open(additional_files_archive_file, "wb") { |f| f.write(submission.additional_files) }
 
-    file = additional_files_dir + "/" + "__init__.py"
+    
     command = "
     sudo mkdir #{additional_files_dir} && sudo chown $(whoami): #{additional_files_dir} &&\
-    sudo touch #{file} && sudo chown $(whoami): #{file} &&\
     isolate \
     -s \
     -b #{box_id} \
@@ -143,6 +144,8 @@ class IsolateJob < ApplicationJob
     puts
 
     `#{command}`
+    file = additional_files_dir + "/" + "__init__.py"
+    `sudo touch #{file} && sudo chown $(whoami): #{file}`
 
     File.delete(additional_files_archive_file)
   end
@@ -252,6 +255,7 @@ class IsolateJob < ApplicationJob
     -E SAND_BOX=1 \
     -E PATH=\"/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin\" \
     -E LANG -E LANGUAGE -E LC_ALL -E JUDGE0_HOMEPAGE -E JUDGE0_SOURCE_CODE -E JUDGE0_VERSION \
+    -E PYTHONPATH=\"#{pythonpath}\" \
     -d /etc:noexec \
     -d /api/assets:noexec \
     -d /box/data=/api/assets/data \
