@@ -201,7 +201,7 @@ def create_project(body):
 def save_project():
     try:
         body = request.get_json()
-
+                                                            
         # project_id is not given
         # creates new project
         if "project_id" not in body:
