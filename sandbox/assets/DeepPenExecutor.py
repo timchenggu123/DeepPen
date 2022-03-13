@@ -3,7 +3,6 @@ from hashlib import algorithms_available
 from ssl import ALERT_DESCRIPTION_CERTIFICATE_UNOBTAINABLE
 import numpy as np
 from time import time
-from easydict import EasyDict
 from DeepPenAlgorithm import DeepPenAlgorithm
 from torch.utils.data import DataLoader
 import torch
@@ -22,14 +21,16 @@ class DeepPenExecutor():
             data=data.detach().cpu().numpy()
             res = net(data)
             return torch.tensor(res.numpy())
-    def run_user_algorithm(self,algo:DeepPenAlgorithm, net, data):
+
+    def run_user_algorithm(self,algo:DeepPenAlgorithm, net, x, y):
         if self.framework=="torch":
             algo.counter+=1
-            return algo.run_algorithm(net, data)
+            return algo.run_algorithm(net, x, y)
         else:
             algo.counter+=1
-            data=np.asarray(data.detach().cpu().numpy(), dtype=np.float32)
-            return torch.Tensor(algo.run_algorithm(net, data).numpy())
+            x=np.asarray(x.detach().cpu().numpy(), dtype=np.float32)
+            y=np.asarray(y.detach().cpu().numpy(), dtype=np.float32)
+            return torch.Tensor(algo.run_algorithm(net, x, y).numpy())
          
     def run_standard(self, net, x,y):
         algorithm = self.algorithm
@@ -38,7 +39,7 @@ class DeepPenExecutor():
         data = {}
             
         start_time = time()
-        x_adv = self.run_user_algorithm(algorithm,net,x)
+        x_adv = self.run_user_algorithm(algorithm,net,x,y)
         end_time = time()
 
         y_pred_val, y_pred_ind = self.net_inference(net, x).max(1)  # model prediction on clean examples

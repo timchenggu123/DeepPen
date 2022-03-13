@@ -5,9 +5,9 @@ import os
 from DeepPenNNs import *
 from DeepPenNetTrainer import DeepPenNetTrainer
 from DeepPenData import MNIST
-from deeprobust.image.defense.TherEncoding import Thermometer
-from deeprobust.image.defense.pgdtraining import PGDtraining
-from deeprobust.image.config import defense_params
+# from deeprobust.image.defense.TherEncoding import Thermometer
+# from deeprobust.image.defense.pgdtraining import PGDtraining
+# from deeprobust.image.config import defense_params
 
 def train(model_class, m_hidden, n_nodes):
     N_EPOCHS = 5
@@ -26,10 +26,10 @@ def train(model_class, m_hidden, n_nodes):
             trainer = DeepPenNetTrainer(model, optim, MNIST.get_train_data(), MNIST.get_test_data())
             trainer.run(verbose=True, threshold = 0.90)
 
-def train_defense(model):
-    defense = Thermometer(model,[1])
-    defense.generate(MNIST.get_train_data(),MNIST.get_test_data(), **defense_params["Thermometer_MNIST"])
-    return model
+# def train_defense(model):
+#     defense = Thermometer(model,[1])
+#     defense.generate(MNIST.get_train_data(),MNIST.get_test_data(), **defense_params["Thermometer_MNIST"])
+#     return model
 
 def main():
     model_class= 'MNIST_CNN'

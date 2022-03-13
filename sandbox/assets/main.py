@@ -6,6 +6,7 @@ import json
 IS_SAND_BOX = False if os.environ.get("SAND_BOX", None) == None else True
 if IS_SAND_BOX:
     sys.path.append("/api/assets")
+
 from DeepPenExecutor import DeepPenExecutor
 from DeepPenNetTrainer import DeepPenNetTrainer
 from DeepPenAlgorithm import DeepPenAlgorithm
@@ -14,9 +15,7 @@ from DeepPenNNs import *
 from algorithm import Solution
 
 ROOT_DIR = "/api/assets/" if IS_SAND_BOX else "./"
-
 NET_DIR = ROOT_DIR + "networks/"
-# NET_DIC_PATH = NET_DIR + "net_dict.json"
 RESULTS_DIR = "/box/" if IS_SAND_BOX else ROOT_DIR
 
 
@@ -37,8 +36,11 @@ def get_net(prop, framework="torch"):
             def name(self, name):
                 self.name=name
             def __call__(self, input):
+                return  self.predict(input)
+            def predict(self, input):
                 ret = super().__call__(input=input)
                 return  [ret[key] for key in ret.keys()][0]
+
         net.__class__=TF_Wrapper
         net.name=f'{net_class}_{m_hidden_layers}_{n_nodes}'
     return net
@@ -46,7 +48,6 @@ def get_net(prop, framework="torch"):
 def save_results(results):
     with open(RESULTS_DIR + "results.json", "w") as f:
         json.dump(results, f)
-        # print(RESULTS_DIR + "results.json")s
 
 def main(args, 
          algo, 
@@ -104,7 +105,7 @@ if __name__ == "__main__":
     data_configs={
         "random": "1",
         "indices":"[1,2,4,5,6,7,8,9,10]",
-        "n_test_data":100
+        "n_test_data":10
     }
     
     if IS_SAND_BOX:
