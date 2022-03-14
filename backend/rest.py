@@ -78,6 +78,100 @@ def authenticate():
                 status=401
             )
 
+################################# DASHBOARDS #################################
+
+@app.route("/dashboards", methods=["POST"])
+@cross_origin()
+def save_dashboard():
+    try:
+        body = request.get_json()
+        user_id = jwt.decode(request.headers["authorization"], "DeepPenetration", algorithms=["HS256"])["sub"]
+
+        d = datetime.datetime.utcnow()
+
+        instance = {
+            **body,
+            "created_at": d,
+            "updated_at": d,
+            "user_id": user_id
+        }
+
+        dbResponse = db.dashboards.insert_one(instance)
+
+        return Response(
+            response= "Successfully added dashboard",
+            status= 200,
+            mimetype="application/json",
+        )
+    except Exception as ex:
+        return Response(
+            response= json.dumps({"message": "Unable to store dashboard", "ex": str(ex)}),
+            status= 500,
+            mimetype="application/json",
+        )
+
+@app.route("/dashboards", methods=["GET"])
+@cross_origin()
+def get_dashboards():
+    try:
+        dbResponse = db.dashboards.find({"user_id": jwt.decode(request.headers["authorization"], "DeepPenetration", algorithms=["HS256"])["sub"]})
+
+        return Response(
+            response= dumps(dbResponse),
+            status= 200,
+            mimetype="application/json",
+        )
+
+    except Exception as ex:
+        return Response(
+            response= json.dumps({"message": "Unable to find dashboard", "ex": str(ex)}),
+            status= 500,
+            mimetype="application/json",
+        )
+
+
+@app.route("/dashboards/<dashboard_id>", methods=["GET"])
+@cross_origin()
+def get_dashboard(dashboard_id):
+    try:
+        dbResponse = db.dashboards.find_one({"_id": ObjectId(dashboard_id)})
+
+        return Response(
+            response= dumps(dbResponse),
+            status= 200,
+            mimetype="application/json",
+        )
+
+    except Exception as ex:
+        return Response(
+            response= json.dumps({"message": "Unable to find dashboard", "ex": str(ex)}),
+            status= 500,
+            mimetype="application/json",
+        )
+
+
+@app.route("/dashboards/<dashboard_id>", methods=["DELETE"])
+@cross_origin()
+def delete_by_dashboard_id(dashboard_id):
+    try:
+        db.dashboards.delete_one({"_id": ObjectId(dashboard_id)})
+
+        return Response(
+            response= "Resource Deleted Succesfully",
+            status= 204,
+            mimetype="application/json",
+        )
+    except Exception as ex:
+        print("********")
+        print(ex)
+
+        return Response(
+            response= json.dumps({"message": "Unable to delete dashboard", "ex": str(ex)}),
+            status= 500,
+            mimetype="application/json",
+        )
+
+
 ################################# PROJECTS #################################
 @app.route("/projects", methods=["GET"])
 @cross_origin()
@@ -155,9 +249,11 @@ def get_project_by_id(project_id):
 @cross_origin()
 def get_project_stats_by_id(project_id):
     try:
-        project = db.projects.find({"_id": ObjectId(project_id)})
+        project = db.projects.find_one({"_id": ObjectId(project_id)})
+        
         latest_submission_id = project["submission_ids"][-1]
-        submission = db.submissions.find({"_id": latest_submission_id})
+        submission = db.submissions.find_one({"_id": latest_submission_id})
+
         # try:
         #     submission = db.submissions.find({"project_id": project_id}).sort("_id",-1)[0]
         # except:
