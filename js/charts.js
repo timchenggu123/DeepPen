@@ -2,6 +2,7 @@
 const randomNum = () => Math.floor(Math.random() * (235 - 52 + 1) + 52);
 const randomRGB = (alpha) => `rgb(${randomNum()}, ${randomNum()}, ${randomNum()}, ${alpha})`;
 var chartLayout;
+var dashboardId;
 
 function localStorageSetItem(key, value) {
     try {
@@ -36,7 +37,7 @@ Here, you can create charts with data from projects you have created.<br>\
 <br>\
 Get started with creating your first dashboard by pressing \"New Chart\"!\
 <h2>"
-var config = {
+var dashboardConfig = {
     content: [{
         type: 'row',
         isClosable: false,
@@ -47,7 +48,6 @@ var config = {
         }]
     }]
 };
-
 
 
 function getSpeedChartData(data){
@@ -122,7 +122,6 @@ async function getProjects(){
         async: true,
         headers: { 'Authorization': getCookie('token') },
         success: function (data, textStatus, jqXHR) {
-            console.log(data);
             return data;
         },
         error: handleRunError
@@ -147,7 +146,6 @@ async function listProjects(){
         ret.push([project._id.$oid,project.name, project.updated_at.$date])   
     })
     return ret
-    return
 }
 
 async function getProjectData(project_id){
@@ -162,28 +160,27 @@ const chartDatafunctions={
 }
 
 const chartTemplate={
-data: {
-    labels: [],
-    datasets: []
-},
-options: {
-    scales: {
-        y: {
-            beginAtZero: true,
-            
-            ticks: {
-                // Include a dollar sign in the ticks
-                // callback: function(value, index, values) {
-                //     return value + 's';
+    data: {
+        labels: [],
+        datasets: []
+    },
+    options: {
+        scales: {
+            y: {
+                beginAtZero: true,
+                
+                ticks: {
+                    // Include a dollar sign in the ticks
+                    // callback: function(value, index, values) {
+                    //     return value + 's';
+                    // }
+                },
+                // grid: {
+                //     color: 'rgba(255, 255, 255, 0.2)'
                 // }
             },
-            // grid: {
-            //     color: 'rgba(255, 255, 255, 0.2)'
-            // }
-        },
+        }
     }
-
-}
 }
 
 const chartDatasetTemplates={
@@ -191,49 +188,60 @@ const chartDatasetTemplates={
         type: 'bar',
         label: 'Speed',
         backgroundColor: randomRGB(0.9),
-        borderColor: randomRGB(0.2),
         borderWidth: 0
     },
     1:{
         type: "line",
-        label: 'Original - Adversarial Accuracy',
+        label: 'Accuracy Drop',
         fill: true,
         fillColor: randomRGB(0.9),
-        borderColor: randomRGB(0.9),
         tension: 0.5
     },
     2:{
         type: 'bar',
-        label: 'Speed',
+        label: 'X-Similarity',
         backgroundColor: randomRGB(0.9),
-        borderColor: randomRGB(0.2),
         borderWidth: 0
     },
-
 }
+
+function getChartDatasetTemplate(type){
+    let d_template = chartDatasetTemplates[type];
+    let dataset = {};
+    dataset = JSON.parse(JSON.stringify(d_template));
+
+    if (dataset.type == 'bar'){
+        dataset.backgroundColor = randomRGB(0.9);
+    }
+
+    if (dataset.type == 'line'){
+        dataset.fillColor = randomRGB(0.9);
+    }
+    return dataset;
+}
+
 async function newChart(type, projects){
     const func = chartDatafunctions[type];
     const project_data=[];
     for (let i =0; i < projects.length; i+=1){
         project_data.push(func(await getProjectData(projects[i][1])));
     }
-    console.log(project_data)
+
     let x_labels=[];
     project_data.forEach(data=>{
         x_labels=x_labels.concat(data.x_labels);
     })
     x_labels=arrayUnique(x_labels);
     
-    let d_template = chartDatasetTemplates[type]
     let datasets = [];
     for (let i=0; i < project_data.length; i+=1){
-        let dataset = JSON.parse(JSON.stringify(d_template));
+        let dataset = getChartDatasetTemplate(type);
         dataset.data=project_data[i].data;
-        dataset.label=projects[i];
+        dataset.label=projects[i][0];
         datasets.push(dataset);
     }
 
-    let c_template=chartTemplate;
+    let c_template=JSON.parse(JSON.stringify(chartTemplate));
     c_template.data.datasets=datasets;
     c_template.label=x_labels;
     return c_template;
@@ -336,20 +344,36 @@ function addProjectToTable(){
     updateProjectsTable(data.split(","), 'projects-table')
 }
 
-async function createNewChart(){
-    const type = document.getElementById("select-type").value
-    const projects = readProjectsTableData2Array("projects-table")
-    const chart_data = await newChart(type, projects)
-    let config = {
-            title:"chart",
+async function createNewChart(type, projects){
+
+    if (type == undefined && projects == undefined){
+        type = document.getElementById("select-type").value
+        projects = readProjectsTableData2Array("projects-table")
+        let config = {
+            title: type,
             componentName:"chart",
             type:'component',
             componentState: {
-                chart_data:chart_data
+                type: type,
+                projects: projects
             }
-
+        }
+    
+        chartLayout.root.contentItems[0].addChild(config);
+        return;
     }
-    chartLayout.root.contentItems[ 0 ].addChild(config);
+
+    let config = {
+        title: type,
+        componentName:"chart",
+        type:'component',
+        componentState: {
+            type: type,
+            projects: projects
+        }
+    }
+
+    chartLayout.root.contentItems[0].addChild(config);
 }
 
 async function createSelectProjects(){
@@ -363,10 +387,62 @@ async function createSelectProjects(){
     })
 }
 
-function saveDashboard(){
-    return chartLayout.toConfig()
+async function saveDashboard(){
+    
+    $.ajax({
+        url: apiUrl + `/dashboards`,
+        type: "POST",
+        async: true,
+        contentType: "application/json",
+        data: JSON.stringify(chartLayout.toConfig()),
+        headers: { 'Authorization': getCookie('token') },
+        xhrFields: {
+            withCredentials: apiUrl.indexOf("/secure") != -1 ? true : false
+        },
+        success: function (data) {
+            console.log(`Your Dashboard Id: ${data}`);
+        }
+    });
 }
-$(document).ready(function () {
+
+function GetURLParameter(sParam)
+{
+    var sPageURL = window.location.search.substring(1);
+    var sURLVariables = sPageURL.split('&');
+    for (var i = 0; i < sURLVariables.length; i++)
+    {
+        var sParameterName = sURLVariables[i].split('=');
+        if (sParameterName[0] == sParam)
+        {
+            return sParameterName[1];
+        }
+    }
+}
+
+async function getDashboard(dashboardId){
+    return $.ajax({
+        url:  apiUrl + `/dashboards/` + dashboardId,
+        type: "GET",
+        async: true,
+        headers: { 'Authorization': getCookie('token') },
+        success: function (data) {
+            return data;
+        },
+        error: handleRunError
+    });
+}
+
+$(document).ready(async function () {
+    dashboardId = GetURLParameter('dashboardId');
+
+    if (dashboardId != undefined){
+        dashboardConfig = await getDashboard(dashboardId);
+    }
+
+    defaultChars = GetURLParameter('default_charts');
+    let projects = [];
+    let defaultTypes = [0, 1, 2];
+
     $("select.dropdown").dropdown();
     $(".ui.dropdown").dropdown();
     $(".ui.dropdown.ide-links").dropdown({action: "hide", on: "hover"});
@@ -378,12 +454,55 @@ $(document).ready(function () {
     $('.tabular.menu .item').tab()
     createChartsProjectsTable([],"projects-table")
     createSelectProjects();
-    chartLayout = new window.GoldenLayout( config, $('#charts-container') );
-    chartLayout.registerComponent( 'chart', function ( container, state ){
-        const chart = drawChart(state.chart_data);
-        container.getElement().append(chart)
-        container.getElement().css('background-color', '#f5f5f5')
+
+    if (defaultChars == "true"){
+        console.log("projects", projects);
+        project_ids = GetURLParameter('project_id');
+        let split = project_ids.split(",");
+        split.forEach(entry => {
+            if (entry.length > 0){
+                console.log(entry);
+                let project_name_id_pair = entry.split("-");
+                projects.push([decodeURI(project_name_id_pair[1]), project_name_id_pair[0]]);
+            }
+        });
+
+        let charts = [];
+        defaultTypes.forEach(type => {
+            let config = {
+                title: chartDatasetTemplates[type].label,
+                componentName:"chart",
+                type:'component',
+                componentState: {
+                    type: type,
+                    projects: projects
+                }
+            }
+            charts.push(config);
+            //createNewChart(type, projects);
+        });
+
+        dashboardConfig = {
+            content: [{
+                type: 'row',
+                isClosable: false,
+                content: charts
+            }]
+        }; 
+    }
+
+    chartLayout = new window.GoldenLayout( dashboardConfig, $('#charts-container') );
+
+    chartLayout.registerComponent('chart', function ( container, state ){
+        async function register(){
+            const chart_data = await newChart(state.type, state.projects);
+            const chart = drawChart(chart_data);
+            container.getElement().append(chart);
+            container.getElement().css('background-color', '#f5f5f5');
+        }
+        register();
     });
+
     chartLayout.registerComponent( 'intro', function( container, state ){
         container.getElement().html(state.text)
     });
@@ -392,9 +511,7 @@ $(document).ready(function () {
 })
 
 $(window).resize(function() {
-    if (layout != undefined){
-        layout.updateSize();
+    if (chartLayout != undefined){
+        chartLayout.updateSize();
     }
-    // showMessages();
 });
-

@@ -1,5 +1,5 @@
 var defaultUrl = localStorageGetItem("api-url") || "http://127.0.0.1:2358";
-var apiUrl = defaultUrl;
+var apiUrl = "http://127.0.0.1:6969";
 var wait = localStorageGetItem("wait") || false;
 var check_timeout = 300;
 
@@ -493,6 +493,7 @@ function fetchSubmission(submission_token) {
         async: true,
         headers: { 'Authorization': getCookie('token') },
         success: function (data, textStatus, jqXHR) {
+            console.log(data)
             if (data.status.id <= 2) { // In Queue or Processing
                 setTimeout(fetchSubmission.bind(null, submission_token), check_timeout);
                 return;
@@ -603,20 +604,6 @@ function fileUploadHandler(fileInput){
 async function getProjects(){
     return $.ajax({
         url:  apiUrl + `/projects`,
-        type: "GET",
-        async: true,
-        headers: { 'Authorization': getCookie('token') },
-        success: function (data, textStatus, jqXHR) {
-            console.log(data);
-            return data;
-        },
-        error: handleRunError
-    });
-}
-
-async function getDashboards(){
-    return $.ajax({
-        url:  apiUrl + `/dashboards`,
         type: "GET",
         async: true,
         headers: { 'Authorization': getCookie('token') },
@@ -755,7 +742,7 @@ async function getProjectStats(projectId){
 async function deleteProject(projectId){
     if (confirm('Are you sure you want to delete this project?')){
         return $.ajax({
-            url:  apiUrl + `/projects/` + projectId,
+            url: apiUrl + `/projects/` + projectId,
             type: "DELETE",
             async: true,
             headers: { 'Authorization': getCookie('token') },
@@ -1021,9 +1008,9 @@ from torch import Tensor\n\
 #import MyModules\n\
 \n\
 class Solution(DeepPenAlgorithm):\n\
-    def run_algorithm(self, net, data) -> Tensor:\n\
+    def run_algorithm(self, net, x, y) -> Tensor:\n\
         eps = 0.05\n\
-        x_fgm = fast_gradient_method(net, data, eps, np.inf)\n\
+        x_fgm = fast_gradient_method(net, x, eps, np.inf)\n\
         return x_fgm\n\
 ";
 
@@ -1035,9 +1022,9 @@ from tensorflow import Tensor\n\
 #import MyModules\n\
 \n\
 class Solution(DeepPenAlgorithm):\n\
-    def run_algorithm(self, net, data) -> Tensor:\n\
+    def run_algorithm(self, net, x, y) -> Tensor:\n\
         eps = 0.05\n\
-        x_fgm = fast_gradient_method(net, data, eps, np.inf)\n\
+        x_fgm = fast_gradient_method(net, x, eps, np.inf)\n\
         return x_fgm\n\
 "
 var sources = {
