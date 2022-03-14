@@ -168,7 +168,8 @@
                     <span> Projects <i class="icon folder"></i></span>
                 </div>
                 <div class="ui inverted menu" style="width: 95%; margin:auto; padding:15px">
-                    <button id="save-btn" class="ui primary labeled icon button" style="margin-right: 10px;" onclick="createCharts()">Create Charts <i class="save icon"></i></button>
+                    <button id="toggle-btn-charts" class="ui primary icon button" style="margin-right: 10px;" onclick="showCreateCharts()">Create Charts</button>
+                    <button id="save-btn-charts" class="ui primary labeled icon button" style="margin-right: 10px; display:none;" onclick="createCharts()">Create Charts For Selected Projects <i class="save icon"></i></button>
                 </div>
                 <div class="thirteen wide column right floated">
                     <div id="projects-table-container" class="ui container" style="overflow: hidden; float: left; padding-left: 2%;"></div>

@@ -160,6 +160,9 @@
                     <i class="ui inverted pencil icon"></i>
                 </div>
                 <div id="ide-navigation" class="ui small inverted menu">
+                    <!-- <div class="ui inverted labeled icon button" onclick="$('#addfile').modal('show')">Add Files
+                        <i class="add icon"></i>
+                    </div> -->
                     <!-- <div id="ide-header" class="header item">
                         <a href="/">
                             <img id="ide-icon" src="./images/judge0_icon.png">
@@ -293,6 +296,32 @@
         </div>
 
     </div>
+<!-- 
+    <div id="addfile" class="ui modal">
+        <i class="close icon"></i>
+        <div class="header">
+            <i class="wrench icon"></i>
+            Add Additional Files
+        </div>
+        <div class="content">
+            <div class="ui form">
+
+                <div class="menu">
+                    <div class="item">
+                        <label for="additional_file" id="file-upload-label" class="item" target="_blank" href="/"><i class="upload icon"></i> Additional Files (*.zip)</label>
+                        <input type="file" id="additional_file" style="display: none;" onclick="fileUploadHandler(this)" accept=".zip"/>
+                    </div>
+                    <div class="item" onclick="downloadSource()">
+                        <a>
+                            <i class="download icon"></i> Download Source Code
+                        </a>
+                    </div>
+                    <div id="insert-template-btn" class="item"><i class="file code outline icon"></i> Insert template
+                        for current language</div>
+                </div>
+            </div>
+        </div>
+    </div> -->
 
     <div id="ide-footer" style="display: none">
         <div id="editor-status-line"></div>

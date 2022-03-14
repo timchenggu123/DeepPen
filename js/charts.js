@@ -109,7 +109,7 @@ function getSimilarityChartData(data){
     }
 }
 
-var defaultUrl = localStorageGetItem("api-url") || "http://127.0.0.1:6969";
+var defaultUrl = "http://127.0.0.1:6969";
 var apiUrl = defaultUrl;
 
 function handleRunError(jqXHR, textStatus, errorThrown) {
@@ -388,13 +388,20 @@ async function createSelectProjects(){
 }
 
 async function saveDashboard(){
-    
+
+    let data = chartLayout.toConfig();
+    const project_name = document.getElementById('dashboard-name');
+    const curr_name = project_name.innerText;
+    const val = prompt("Enter new dashboard name", curr_name);
+    data.name = val ? val:curr_name;
+    console.log(data);
+
     $.ajax({
         url: apiUrl + `/dashboards`,
         type: "POST",
         async: true,
         contentType: "application/json",
-        data: JSON.stringify(chartLayout.toConfig()),
+        data: JSON.stringify(data),
         headers: { 'Authorization': getCookie('token') },
         xhrFields: {
             withCredentials: apiUrl.indexOf("/secure") != -1 ? true : false
