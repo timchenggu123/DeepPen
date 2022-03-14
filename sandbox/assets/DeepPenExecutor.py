@@ -60,6 +60,7 @@ class DeepPenExecutor():
         stats["accuracy"]=accuracy
         stats["accuracy_adv"]=accuracy_adv
         stats["mean_similarity"] = float(x_sim.mean().detach().cpu().numpy())
+        stats["custom"]=algorithm.custom_stats
         
         self.stats_agg(stats, "n_data", y.size(0), op="sum")
         

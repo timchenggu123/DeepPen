@@ -4,7 +4,9 @@ import pickle
 import torch.nn.functional as F
 
 class DeepPenNetTrainer():
-    def __init__(self, net, optim, train_loader, test_loader, log_interval = 10, save_path = './networks/'):
+    def __init__(self, net, optim, train_loader, test_loader, 
+            device='cpu',log_interval = 10, save_path = './networks/', verbose=False):
+        
         self.net = net
         self.optim = optim
         self.train_loader = train_loader
@@ -12,24 +14,25 @@ class DeepPenNetTrainer():
         
         self.save_path = save_path
         self.log_interval = log_interval
-        self.verbose = False
+        self.verbose = verbose
 
         self.train_losses = []
         self.train_counter = []
         self.test_losses = []
+        self.device = device
 
         torch.autograd.set_detect_anomaly(True)
 
-    def run(self, n_epochs=None, verbose = False, threshold = 0.85):
+    def run(self, n_epochs=None, verbose = False, threshold = 0.85, max_epochs=20):
         self.verbose = verbose
         if n_epochs is not None:
             for epoch in range(1, n_epochs + 1):
                 self.train(epoch)
                 self.test()
         else:
-            for epoch in range(1, 20):
+            for epoch in range(1, max_epochs):
                 self.train(epoch)
-                self.save(self.net)
+                self.save()
                 if self.test() > threshold:
                     break
                 
@@ -38,8 +41,11 @@ class DeepPenNetTrainer():
         network = self.net
         optimizer = self.optim
         train_loader = self.train_loader
+        network.to(self.device)
         network.train()
         for batch_idx, (data, target) in enumerate(train_loader):
+            data= data.to(self.device)
+            target=target.to(self.device)
             optimizer.zero_grad()
             output = network(data)
             loss = F.nll_loss(output, target)
@@ -57,19 +63,24 @@ class DeepPenNetTrainer():
             
               # torch.save(optimizer.state_dict(), self.save_path + str(hash(network)) + 'optimizer.pth')
 
-    def save(self, net):
+    def save(self):
+        net=self.net
         if self.save_path is not None:
+            self.net.to('cpu')
             self.check_path()
             torch.save(net.state_dict(), self.save_path + net.name + 'model.pth')
               
     def test(self):
         network=self.net
         test_loader = self.test_loader
+        network.to(self.device)
         network.eval()
         test_loss = 0
         correct = 0
         with torch.no_grad():
             for data, target in test_loader:
+                data=data.to(self.device)
+                target=target.to(self.device)
                 output = network(data)
                 test_loss += F.nll_loss(output, target, size_average=False).item()
                 pred = output.data.max(1, keepdim=True)[1]

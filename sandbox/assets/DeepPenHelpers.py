@@ -5,8 +5,6 @@ import onnx
 from onnx_tf.backend import prepare
 from DeepPenNNs import *
 from DeepPenData import MNIST
-from deeprobust.image.defense.fgsmtraining import FGSMtraining
-from deeprobust.image.config import defense_params
 
 NETWORKS_PATH="./networks/"
 ONNX_PATH="./networks/onnx/"
@@ -21,6 +19,7 @@ def pth2onnx(filename):
     model = net_class([28**2] + [n_nodes for i in range(m_hidden_layers)] +[10])
     net_path = os.path.join(NETWORKS_PATH, filename)
     model.load_state_dict(torch.load(net_path))
+    
     dummy_input = torch.autograd.Variable(torch.randn(1, 1, 28, 28))
     dynamic_axes = {'input' : {0 : 'batch_size'}, 
                     'output':{0 : 'batch_size'}}
@@ -39,27 +38,30 @@ def onnx2tf(filename):
     tf_rep.export_graph(tf_path)
     return filename.replace(".onnx", ".pb")
 
-def train_defense(filename):
-    prop=filename.replace("model.pth", "").split("_")
-    m_hidden_layers = int(prop[2])
-    n_nodes = int(prop[3])
-    net_class = "_".join(prop[0:2])
-    net_class = eval(net_class)
-    model = net_class([28**2] + [n_nodes for i in range(m_hidden_layers)] +[10])
-    net_path = os.path.join(NETWORKS_PATH, filename)
-    model.load_state_dict(torch.load(net_path))
-    defense = FGSMtraining(model, 'cpu')
-    defense.generate(MNIST.get_train_data(),MNIST.get_test_data(), **defense_params["FGSMtraining_MNIST"])
-    return 
+# def train_defense(filename):
+#     prop=filename.replace("model.pth", "").split("_")
+#     m_hidden_layers = int(prop[2])
+#     n_nodes = int(prop[3])
+#     net_class = "_".join(prop[0:2])
+#     net_class = eval(net_class)
+#     model = net_class([28**2] + [n_nodes for i in range(m_hidden_layers)] +[10])
+#     net_path = os.path.join(NETWORKS_PATH, filename)
+#     model.load_state_dict(torch.load(net_path))
+#     defense = FGSMtraining(model, 'cpu')
+#     defense.generate(MNIST.get_train_data(),MNIST.get_test_data(), 
+#             save_dir=f"{NETWORKS_PATH}/adv", save_name=f"FGSM_{model.name}", 
+#             epoch_num=20, epsilon=0.05, lr_train = 0.005)
+#     return 
 
 def main():
     for filename in os.listdir(NETWORKS_PATH):
         ext = os.path.splitext(filename)[1]
-        if ext == ".pth" and filename.startswith('MNIST_CNN'):
-            model = train_defense(filename)
-            # onnx_filename = pth2onnx(filename)
-            # onnx_filename = filename.replace("model.pth", ".onnx")
-            # tf_filename = onnx2tf(onnx_filename)
+        if ext == ".pth" and filename.startswith('MNIST_FFNN'):
+            print(filename)
+            # model = train_defense(filename)
+            onnx_filename = pth2onnx(filename)
+            onnx_filename = filename.replace("model.pth", ".onnx")
+            tf_filename = onnx2tf(onnx_filename)
             
 if __name__=="__main__":
     main()
