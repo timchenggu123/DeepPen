@@ -72,7 +72,7 @@ def generate_token(user_id):
 def authenticate():
     if request.method == "OPTIONS":
         return Response(status=200)
-    if request.endpoint != "login" and request.endpoint != "register":
+    if request.endpoint != "login" and request.endpoint != "register" and request.endpoint != "logout":
         if not auth(request):
             return Response(
                 status=401
@@ -128,11 +128,15 @@ def delete_by_project_id(project_id):
 @cross_origin()
 def get_project_by_id(project_id):
     try:
-        project = db.projects.find({"_id": ObjectId(project_id)})
-        try:
-            submission = db.submissions.find({"project_id": project_id}).sort("_id",-1)[0]
-        except:
-            submission = db.submissions.find({"project_id": ObjectId(project_id)}).sort("_id",-1)[0]
+        project = db.projects.find_one({"_id": ObjectId(project_id)})
+
+        latest_submission_id = project["submission_ids"][-1]
+        submission = db.submissions.find_one({"_id": latest_submission_id})
+
+        # try:
+        #     submission = db.submissions.find({"project_id": project_id}).sort("_id",-1)[0]
+        # except:
+        #     submission = db.submissions.find({"project_id": ObjectId(project_id)}).sort("_id",-1)[0]
 
         resp = {'project': project, 'submission': submission}
 
@@ -155,9 +159,10 @@ def get_project_by_id(project_id):
 @cross_origin()
 def get_project_stats_by_id(project_id):
     try:
-        project = db.projects.find({"_id": ObjectId(project_id)})
+        project = db.projects.find_one({"_id": ObjectId(project_id)})
+
         latest_submission_id = project["submission_ids"][-1]
-        submission = db.submissions.find({"_id": latest_submission_id})
+        submission = db.submissions.find_one({"_id": latest_submission_id})
         # try:
         #     submission = db.submissions.find({"project_id": project_id}).sort("_id",-1)[0]
         # except:
@@ -532,18 +537,10 @@ def login():
 @app.route("/logout", methods=["POST"])
 def logout():
     try:
-        request_data = request.get_json()
-        user = db.users.find_one({
-            "username": request_data['user']
-        })
+        user_id = jwt.decode(request.headers["authorization"], "DeepPenetration", algorithms=["HS256"])["sub"]
+        user = db.users.find_one({"_id": ObjectId(user_id)})
 
-        user["_id"] = str(user["_id"])
-        if not bcrypt.checkpw(request_data["password"].encode('utf-8'), user["password"]):
-            return Response(
-                status=401
-            )
-
-        db.tokens.update_many({"user" : ObjectId(user["_id"])}, {"$set": {"valid": False}})
+        db.tokens.update_many({"user" : user["_id"]}, {"$set": {"valid": False}})
 
         return Response(
             response= json.dumps({
