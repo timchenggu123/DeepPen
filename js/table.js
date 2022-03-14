@@ -296,6 +296,8 @@ async function createProjectsTable(){
     let th5 = document.createElement("th");
     let th6 = document.createElement("th");
     let th7 = document.createElement("th");
+    th7.setAttribute("class", "dashboardcheck");
+    th7.setAttribute("style", "display: none;");
     
     tr.append(th1);
     tr.append(th2);
@@ -348,6 +350,7 @@ async function createProjectsTable(){
         checkbox.setAttribute("class", "dashboardcheck");
         checkbox.setAttribute("project_id", `${project._id.$oid}`);
         checkbox.setAttribute("project_name", `${project.name}`);
+        checkbox.setAttribute("style", "display: none;");
 
         td1.innerHTML = num.toString();
         td2.appendChild(link);
@@ -387,6 +390,15 @@ function createCharts(){
     });
     
     if (redirect){
-        window.open(redirect_url);
+        window.open(redirect_url, "_self");
     }
+}
+
+function showCreateCharts(){
+    let projects = document.querySelectorAll(".dashboardcheck");
+    projects.forEach(ele => {
+        ele.setAttribute("style", "display:block;");
+    });
+    document.getElementById("toggle-btn-charts").setAttribute("style", "display:none;");
+    document.getElementById("save-btn-charts").setAttribute("style", "display:block;");
 }

@@ -589,14 +589,13 @@ function updateScreenElements() {
 }
 
 function fileUploadHandler(fileInput){
-    console.log(fileInput)
     const files = fileInput.files;
-    let message = "Succssfully added following files:\n\r"
+    let message = "Succssfully added following files: "
     for (let i = 0; i < files.length; i++) {
         const name = files[i].name;
         const type = files[i].type;
         additional_files=files[i]
-        message += name+type + "\n\r"
+        message += name+type
       }
       alert(message);
 }
@@ -990,7 +989,7 @@ $(document).ready(async function () {
         if (projectID != undefined){
             getProject(projectID);
         }else{
-            setProjectName();
+            //setProjectName();
             createNNConfigsTable(nn_configs, "nn-configs-table");
             createNNConfigsTable(transfer_nn_configs, "transfer-nn-configs-table");
             loadDataConfigs(data_configs);
