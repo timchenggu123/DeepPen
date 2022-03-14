@@ -97,3 +97,12 @@ class MNIST_CNN(nn.Module):
                 if type(layer) == nn.Linear:
                     nn.init.kaiming_normal_(layer.weight)
 
+class FGSMMNIST_FFNN(MNIST_FFNN):
+    def __init__(self, layer_shape = [], dropout=0.1):
+        super().__init__(layer_shape, dropout)
+        self.name=self.name="FGSMMNIST_FFNN_" + str(len(layer_shape)-2) + "_" + str(layer_shape[1])
+
+class FGSMMNIST_CNN(MNIST_CNN):
+    def __init__(self, layer_shape = [], dropout=0.1):
+        super().__init__(layer_shape, dropout)
+        self.name=self.name="FGSMMNIST_CNN_" + str(len(layer_shape)-2) + "_" + str(layer_shape[1])

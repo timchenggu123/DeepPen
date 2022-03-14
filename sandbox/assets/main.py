@@ -58,8 +58,15 @@ def main(args,
     
     x,y = iter(data).next()
     executor = DeepPenExecutor(args, algo, framework=framework)
+
+    #warm up 
+    for prop in net_props:
+        net = get_net(prop, framework=framework)
+        std_res = executor.run_standard(net, x[[0]], y[[0]])
+    algo.counter=0
+    algo.custom_stats=[]
+
     all_stats = {}
-    all_advs={}
     for prop in net_props:
         net = get_net(prop, framework=framework)
         std_res = executor.run_standard(net, x, y)

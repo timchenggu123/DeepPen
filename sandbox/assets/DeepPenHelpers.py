@@ -56,7 +56,7 @@ def onnx2tf(filename):
 def main():
     for filename in os.listdir(NETWORKS_PATH):
         ext = os.path.splitext(filename)[1]
-        if ext == ".pth" and filename.startswith('MNIST_FFNN'):
+        if ext == ".pth" and filename.startswith('FGSM'):
             print(filename)
             # model = train_defense(filename)
             onnx_filename = pth2onnx(filename)
