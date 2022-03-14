@@ -254,16 +254,9 @@ def get_project_by_id(project_id):
 def get_project_stats_by_id(project_id):
     try:
         project = db.projects.find_one({"_id": ObjectId(project_id)})
-<<<<<<< HEAD
-
-        latest_submission_id = project["submission_ids"][-1]
-        submission = db.submissions.find_one({"_id": latest_submission_id})
-=======
-        
         latest_submission_id = project["submission_ids"][-1]
         submission = db.submissions.find_one({"_id": latest_submission_id})
 
->>>>>>> origin/manish_new
         # try:
         #     submission = db.submissions.find({"project_id": project_id}).sort("_id",-1)[0]
         # except:
